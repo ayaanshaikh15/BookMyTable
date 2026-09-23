@@ -29,6 +29,7 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import ConfirmReservation from "./pages/ConfirmReservation";
 import BookingSucess from "./components/BookingSucess";
+import ForgetPassword from "./components/ForgetPassword";
 function App() {
   return (
     <BrowserRouter>
@@ -36,13 +37,13 @@ function App() {
         {/* Public */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-
+        <Route path="/forgot-password" element={<ForgetPassword />} />
         {/* Customer */}
         <Route element={<CustomerLayout />}>
           <Route path="/" element={<Discover />} />
           <Route path="/restaurants" element={<Restaurants />} />
           <Route path="/restaurants/:id" element={<RestaurantDetails />} />
-
+          
           <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
             <Route path="/my-bookings" element={<MyBookings />} />
             <Route path="/confirm-reservation" element={<ConfirmReservation />}/>

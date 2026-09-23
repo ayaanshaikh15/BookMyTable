@@ -4,7 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 
 const ProtectedRoute = ({ allowedRoles }) => {
  const { user, loading } = useContext(AuthContext);
-  console.log("ProtectedRoute user:", user);
+  
   
   if (loading) {
     return (

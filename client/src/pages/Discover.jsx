@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
+import {
+  Pizza,
+  Fish,
+  Croissant,
+  Soup,
+  Utensils,
+  Salad,
+} from "lucide-react";
 const Discover = () => {
   const [searchData, setSearchData] = useState({
     location: "",
@@ -10,32 +17,32 @@ const Discover = () => {
 
   const [email, setEmail] = useState("");
 
-  const categories = [
-    {
-      name: "Italian",
-      icon: "🍝",
-    },
-    {
-      name: "Sushi",
-      icon: "🍣",
-    },
-    {
-      name: "French",
-      icon: "🥐",
-    },
-    {
-      name: "Indian",
-      icon: "🍛",
-    },
-    {
-      name: "Mexican",
-      icon: "🌮",
-    },
-    {
-      name: "Vegetarian",
-      icon: "🥗",
-    },
-  ];
+ const categories = [
+  {
+    name: "Italian",
+    icon: Pizza,
+  },
+  {
+    name: "Sushi",
+    icon: Fish,
+  },
+  {
+    name: "French",
+    icon: Croissant,
+  },
+  {
+    name: "Indian",
+    icon: Soup,
+  },
+  {
+    name: "Mexican",
+    icon: Utensils,
+  },
+  {
+    name: "Vegetarian",
+    icon: Salad,
+  },
+];
 
   const restaurants = [
     {
@@ -239,7 +246,7 @@ const Discover = () => {
           {/* Category Cards */}
           <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
 
-            {categories.map((category) => (
+            {/* {categories.map((category) => (
               <Link
                 key={category.name}
                 to="/restaurants"
@@ -259,8 +266,29 @@ const Discover = () => {
                 </span>
 
               </Link>
-            ))}
+            ))} */}
+          {categories.map((category) => (
+             <Link
+                key={category.name}
+                to="/restaurants"
+                className="group flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-[#e7e8e3] bg-[#fafbf9] px-4 transition duration-300 hover:-translate-y-1 hover:border-[#cbd1c5] hover:bg-[#f3f5f0] hover:shadow-sm"
+              >
+  <div
+    key={category.name}
+    className="flex flex-col items-center gap-3"
+  >
+    <category.icon
+      size={28}
+      strokeWidth={1.5}
+      className="text-[#b8bcb5]"
+    />
 
+    <span className="text-sm text-[#555b54]">
+      {category.name}
+    </span>
+  </div>
+  </Link>
+))}
           </div>
 
         </div>

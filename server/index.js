@@ -1,9 +1,16 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import connectDB from "./config/DB.js";
+import dns from "dns";
+
 
 dotenv.config();
 
+dns.setServers([
+  "8.8.8.8",
+  "8.8.4.4",
+]);
 const app = express();
 
 // Middleware
@@ -18,7 +25,8 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-
+await connectDB();
 app.listen(PORT, () => {
+  
   console.log(`Server running on http://localhost:${PORT}`);
 });

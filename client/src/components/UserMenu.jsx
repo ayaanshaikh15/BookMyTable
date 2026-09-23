@@ -6,7 +6,7 @@ const UserMenu = ({ user, isOwner, isAdmin, onLogout }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="relative">
+    <div className="relative" >
       {/* Small User Logo */}
       <button
         onClick={() => setIsOpen(!isOpen)}
