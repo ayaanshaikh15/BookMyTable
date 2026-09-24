@@ -1,9 +1,9 @@
 
-import User from "../models/User.js";
+import{ User} from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 const tokenGenerator = (userId,role)=>{
-    jwt.sign(
+   return jwt.sign(
       {
         id: userId,
         role,
@@ -13,11 +13,11 @@ const tokenGenerator = (userId,role)=>{
         expiresIn: "7d",
       }
     );
+    
 }
 const signup = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
-
     if (!name || !email || !password) {
       return res.status(400).json({
         message: "Name, email and password are required",
@@ -42,7 +42,7 @@ const signup = async (req, res) => {
     });
 
     const token = tokenGenerator(user._id,user.role);
-
+    console.log("Generated Token:", token); // Log the generated token for debugging
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
