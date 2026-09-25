@@ -42,7 +42,6 @@ const signup = async (req, res) => {
     });
 
     const token = tokenGenerator(user._id,user.role);
-    console.log("Generated Token:", token); // Log the generated token for debugging
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -136,7 +135,7 @@ const getUser = async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = req.user;
 
     const user = await User.findById(decoded.id).select("-password");
 

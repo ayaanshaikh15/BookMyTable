@@ -27,7 +27,13 @@ app.get("/", async(req, res) => {
 
   res.json(user);
 });
-
+app.use((Error,req,res)=>{
+  console.error("Unhandled Error: ",Error);
+  res.status(500).json({
+    message:"Internal Server Error",
+    stack: NODE_ENV === "production"?undefined : Error.stack
+  })
+})
 const PORT = process.env.PORT || 5000;
 await connectDB();
 app.listen(PORT, () => {
