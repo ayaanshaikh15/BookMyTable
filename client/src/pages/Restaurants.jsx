@@ -1,14 +1,15 @@
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 const Restaurants = () => {
+  const API_URL = import.meta.env.VITE_API_URL;
   const [search, setSearch] = useState({
     location: "",
     cuisine: "",
     guests: "2",
   });
-
+  const [restaurants, setrestaurants] = useState([]);
   const [sortBy, setSortBy] = useState("recommended");
 
   const [filters, setFilters] = useState({
@@ -17,86 +18,26 @@ const Restaurants = () => {
     price: "",
   });
 
-  const restaurants = [
-    {
-      id: "1",
-      name: "The Olive Table",
-      location: "Belagavi, Karnataka",
-      cuisine: "Italian · Continental",
-      rating: 4.8,
-      reviews: 324,
-      price: "₹₹",
-      image:
-        "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1200&q=85",
-      description:
-        "Elegant Italian and Continental dining with a warm, refined atmosphere.",
-    },
-    {
-      id: "2",
-      name: "Koi House",
-      location: "Belagavi, Karnataka",
-      cuisine: "Japanese · Sushi",
-      rating: 4.7,
-      reviews: 286,
-      price: "₹₹₹",
-      image:
-        "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=1200&q=85",
-      description:
-        "Fresh sushi, Japanese favourites and a calm contemporary dining experience.",
-    },
-    {
-      id: "3",
-      name: "Maison 21",
-      location: "Belagavi, Karnataka",
-      cuisine: "French · European",
-      rating: 4.9,
-      reviews: 412,
-      price: "₹₹₹",
-      image:
-        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=85",
-      description:
-        "A sophisticated European dining experience with carefully crafted dishes.",
-    },
-    {
-      id: "4",
-      name: "Spice Route",
-      location: "Belagavi, Karnataka",
-      cuisine: "Indian · North Indian",
-      rating: 4.6,
-      reviews: 198,
-      price: "₹₹",
-      image:
-        "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=1200&q=85",
-      description:
-        "Traditional Indian flavours served with a contemporary touch.",
-    },
-    {
-      id: "5",
-      name: "Casa Verde",
-      location: "Belagavi, Karnataka",
-      cuisine: "Mexican · Vegetarian",
-      rating: 4.5,
-      reviews: 167,
-      price: "₹₹",
-      image:
-        "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1200&q=85",
-      description:
-        "Vibrant Mexican-inspired dishes with plenty of vegetarian options.",
-    },
-    {
-      id: "6",
-      name: "The Garden Room",
-      location: "Belagavi, Karnataka",
-      cuisine: "Vegetarian · Continental",
-      rating: 4.7,
-      reviews: 231,
-      price: "₹₹",
-      image:
-        "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1200&q=85",
-      description:
-        "A relaxed garden-inspired space serving fresh vegetarian cuisine.",
-    },
-  ];
+ useEffect(() => {
+  const fetchFeaturedRestaurants = async () => {
+    try {
+      const response = await fetch(`${API_URL}/restaurants`);
+      const res = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          res.message || "Failed to fetch the featured restaurants"
+        );
+      }
+
+      setrestaurants(res);
+    } catch (e) {
+      console.error("Failed to fetch featured restaurants:", e);
+    }
+  };
+
+  fetchFeaturedRestaurants();
+}, []);
 
   const cuisines = [
     "Italian",
@@ -140,9 +81,9 @@ const Restaurants = () => {
       );
     }
 
-    if (filters.price) {
+    if (filters.priceRange) {
       result = result.filter(
-        (restaurant) => restaurant.price === filters.price
+        (restaurant) => restaurant.priceRange === filters.priceRange
       );
     }
 
@@ -163,7 +104,7 @@ const Restaurants = () => {
     setFilters({
       cuisine: search.cuisine,
       rating: "",
-      price: "",
+      priceRange: "",
     });
   };
 
@@ -177,7 +118,7 @@ const Restaurants = () => {
     setFilters({
       cuisine: "",
       rating: "",
-      price: "",
+      priceRange: "",
     });
 
     setSortBy("recommended");
@@ -524,13 +465,13 @@ const Restaurants = () => {
 
             {filteredRestaurants.map((restaurant) => (
               <article
-                key={restaurant.id}
+                key={restaurant._id}
                 className="group overflow-hidden rounded-2xl border border-[#e5e7e1] bg-white transition duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
 
                 {/* Image */}
 
-                <Link to={`/restaurants/${restaurant.id}`}>
+                <Link to={`/restaurants/${restaurant._id}`}>
                   <div className="relative h-64 overflow-hidden">
 
                     <img
@@ -571,7 +512,7 @@ const Restaurants = () => {
                     </div>
 
                     <span className="whitespace-nowrap text-[10px] text-[#858b84]">
-                      {restaurant.reviews} reviews
+                      {restaurant.reviewCount} reviews
                     </span>
 
                   </div>
@@ -591,7 +532,7 @@ const Restaurants = () => {
                     </span>
 
                     <Link
-                      to={`/restaurants/${restaurant.id}`}
+                      to={`/restaurants/${restaurant._id}`}
                       className="rounded-full bg-[#68755f] px-4 py-2.5 text-[10px] font-semibold text-white transition hover:bg-[#56634e]"
                     >
                       Reserve table

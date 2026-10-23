@@ -1,93 +1,91 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
+import { useNavigate } from "react-router-dom";
 const MyBookings = () => {
   const [activeTab, setActiveTab] = useState("upcoming");
-
+  const [loading, setLoading] = useState(false)
+  const [restaurant, setrestaurant] = useState({})
+  const API_URL = import.meta.env.VITE_API_URL
+  const [upcomming, setupcomming] = useState([])
+  const [cancelled, setcancelled] = useState([])
+  const [completed, setcomplted] = useState([])
+  const navigate = useNavigate();
   // Temporary booking data
   // Replace this later with API data from your backend.
 
-  const upcomingBookings = [
-    {
-      id: "BKG001",
-      restaurantId: "1",
-      restaurant: "The Olive Table",
-      location: "Belagavi, Karnataka",
-      cuisine: "Italian · Continental",
-      image:
-        "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1000&q=85",
-      date: "18 Sep 2026",
-      time: "7:30 PM",
-      guests: 2,
-      table: "Table 04",
-      status: "Confirmed",
-    },
-    {
-      id: "BKG002",
-      restaurantId: "2",
-      restaurant: "Koi House",
-      location: "Belagavi, Karnataka",
-      cuisine: "Japanese · Sushi",
-      image:
-        "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=1000&q=85",
-      date: "21 Sep 2026",
-      time: "8:00 PM",
-      guests: 4,
-      table: "Table 03",
-      status: "Confirmed",
-    },
-  ];
+  
+ useEffect(() => {
+    const fetchMybookings = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`${API_URL}/bookings/`, {
+  method: "GET",
+  credentials: "include",
+});
+        const res = await response.json();
+  
+        if (!response.ok) {
+          throw new Error(
+            res.message || "Failed to fetch the my bookings"
+          );
+        }
+  
+        setrestaurant(res);
+        console.log(res)
+        setupcomming(res.filter((e) => e.status === "confirmed"));
+        setcancelled(res.filter((e) => e.status === "cancelled"));
+        setcomplted(res.filter((e) => e.status === "completed"));
+      } catch (e) {
+        console.error("Failed to fetch  my bookings:", e);
+      }finally{
+        setLoading(false)
+      }
+    };
+  
+    fetchMybookings();
+  }, []);
 
-  const completedBookings = [
-    {
-      id: "BKG003",
-      restaurantId: "3",
-      restaurant: "Maison 21",
-      location: "Belagavi, Karnataka",
-      cuisine: "French · European",
-      image:
-        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1000&q=85",
-      date: "05 Sep 2026",
-      time: "7:00 PM",
-      guests: 2,
-      table: "Table 02",
-      status: "Completed",
-    },
-    {
-      id: "BKG004",
-      restaurantId: "1",
-      restaurant: "The Olive Table",
-      location: "Belagavi, Karnataka",
-      cuisine: "Italian · Continental",
-      image:
-        "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1000&q=85",
-      date: "28 Aug 2026",
-      time: "8:30 PM",
-      guests: 3,
-      table: "Table 05",
-      status: "Completed",
-    },
-  ];
+  let bookings=[];
+  if(activeTab === "upcoming")
+    bookings=upcomming;
+  else if(activeTab === "completed")
+    bookings=completed;
+  else
+    bookings = cancelled;
+ 
 
-  const bookings =
-    activeTab === "upcoming"
-      ? upcomingBookings
-      : completedBookings;
-
-  const handleCancel = (bookingId) => {
+  const handleCancel = async(bookingId) => {
     const confirmed = window.confirm(
       "Are you sure you want to cancel this reservation?"
     );
 
     if (!confirmed) return;
 
-    console.log("Cancel booking:", bookingId);
+    try{
+     setLoading(true)
+       const response = await fetch(`${API_URL}/bookings/${bookingId}`, {
+  method: "DELETE",
+  credentials: "include",
+});
+        const res = await response.json();
+  
+        if (!response.ok) {
+          throw new Error(
+            res.message || "Failed to cancel bookings"
+          );
+        }
+       alert("Booking cancelled")
+       navigate(0)
+    }catch(e){
+       console.error("Failed to cancel booking", e);
+    }finally{
+    setLoading(false)
+    }
 
-    // Later:
-    // Call your backend API here.
+   
   };
-
+  //loading is not implement
   return (
     <main className="min-h-screen bg-white text-[#1d211d]">
 
@@ -160,7 +158,21 @@ const MyBookings = () => {
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#68755f]" />
               )}
             </button>
+              <button
+              type="button"
+              onClick={() => setActiveTab("cancelled")}
+              className={`relative pb-4 text-xs font-medium transition ${
+                activeTab === "cancelled"
+                  ? "text-[#68755f]"
+                  : "text-[#858b84] hover:text-[#555d53]"
+              }`}
+            >
+              Cancelled
 
+              {activeTab === "cancelled" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#68755f]" />
+              )}
+            </button>
           </div>
 
         </div>
@@ -174,9 +186,12 @@ const MyBookings = () => {
           <div>
 
             <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#969b94]">
-              {activeTab === "upcoming"
-                ? "Upcoming reservations"
-                : "Dining history"}
+              {{
+                upcoming:"Upcomming reservation",
+                completed:"Dining History",
+                cancelled:"Cancelled History"
+              }[activeTab]}
+             
             </p>
 
           </div>
@@ -201,7 +216,7 @@ const MyBookings = () => {
             {bookings.map((booking) => (
 
               <article
-                key={booking.id}
+                key={booking.bookingId}
                 className="overflow-hidden rounded-2xl border border-[#e5e7e1] bg-white transition duration-300 hover:shadow-md"
               >
 
@@ -212,7 +227,7 @@ const MyBookings = () => {
                   <div className="h-52 overflow-hidden lg:h-full">
 
                     <img
-                      src={booking.image}
+                      src={booking.restaurantId.image}
                       alt={booking.restaurant}
                       className="h-full w-full object-cover transition duration-700 hover:scale-105"
                     />
@@ -242,29 +257,28 @@ const MyBookings = () => {
                           </span>
 
                           <span className="text-[10px] text-[#a0a49f]">
-                            #{booking.id}
+                            #{booking.bookingId}
                           </span>
 
                         </div>
 
                         <h2 className="mt-3 font-serif text-2xl text-[#20251f] sm:text-3xl">
-                          {booking.restaurant}
+                          {booking.restaurantId.name}
                         </h2>
 
                         <p className="mt-1 text-xs text-[#858b84]">
-                          {booking.location}
+                        
+                          {booking.restaurantId.address}
                         </p>
 
-                        <p className="mt-2 text-xs text-[#687067]">
-                          {booking.cuisine}
-                        </p>
+                       
 
                       </div>
 
                       {/* Restaurant Link */}
 
                       <Link
-                        to={`/restaurants/${booking.restaurantId}`}
+                        to={`/restaurants/${booking.restaurantId._id}`}
                         className="w-fit text-xs font-medium text-[#68755f] hover:underline"
                       >
                         View restaurant →
@@ -285,7 +299,7 @@ const MyBookings = () => {
                         </p>
 
                         <p className="mt-2 text-sm font-medium text-[#30362f]">
-                          {booking.date}
+                          {booking.date.toString().substring(0,10)}
                         </p>
 
                       </div>
@@ -348,7 +362,7 @@ const MyBookings = () => {
                             <button
                               type="button"
                               onClick={() =>
-                                handleCancel(booking.id)
+                                handleCancel(booking._id)
                               }
                               className="rounded-full border border-[#dfe2da] px-4 py-2.5 text-[10px] font-medium text-[#777d76] transition hover:border-red-200 hover:text-red-500"
                             >
@@ -356,7 +370,7 @@ const MyBookings = () => {
                             </button>
 
                             <Link
-                              to={`/restaurants/${booking.restaurantId}`}
+                              to={`/restaurants/${booking.restaurantId._id}`}
                               className="rounded-full bg-[#68755f] px-5 py-2.5 text-[10px] font-semibold text-white transition hover:bg-[#56634e]"
                             >
                               View details
@@ -364,7 +378,7 @@ const MyBookings = () => {
                           </>
                         ) : (
                           <Link
-                            to={`/restaurants/${booking.restaurantId}`}
+                            to={`/restaurants/${booking.restaurantId._id}`}
                             className="rounded-full border border-[#dfe2da] px-5 py-2.5 text-[10px] font-medium text-[#68755f] transition hover:bg-[#f7f8f5]"
                           >
                             Book again
@@ -416,17 +430,24 @@ const MyBookings = () => {
               </svg>
             </div>
 
-            <h2 className="mt-5 font-serif text-2xl text-[#20251f]">
-              {activeTab === "upcoming"
-                ? "No upcoming bookings"
-                : "No completed bookings"}
-            </h2>
+           <h2 className="mt-5 font-serif text-2xl text-[#20251f]">
+  {{
+    upcoming: "No upcoming bookings",
+    completed: "No completed bookings",
+    cancelled: "No cancelled bookings",
+  }[activeTab]}
+</h2>
 
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#858b84]">
-              {activeTab === "upcoming"
-                ? "You don't have any upcoming reservations. Discover a restaurant and reserve your next table."
-                : "Your completed dining experiences will appear here."}
-            </p>
+<p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#858b84]">
+  {{
+    upcoming:
+      "You don't have any upcoming reservations. Discover a restaurant and reserve your next table.",
+    completed:
+      "Your completed dining experiences will appear here.",
+    cancelled:
+      "Your cancelled bookings will appear here.",
+  }[activeTab]}
+</p>
 
             {activeTab === "upcoming" && (
               <Link

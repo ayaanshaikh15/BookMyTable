@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { string } from "zod";
 
 const BookingSchema = new mongoose.Schema(
   {
@@ -43,15 +44,25 @@ const BookingSchema = new mongoose.Schema(
     type:String,
     enum:["completed","confirmed","cancelled"],
     default:"confirmed"
+  },
+  username:{
+    type:String,
+    trim:true
+  },phoneNo:{
+     type:String,
+     trim:true
+  },email:{
+    type:String,
+    trim:true
   }
 },
   {
     timestamps: true,
   }
 );
-BookingSchema.set("save",()=>{
-  if(!this.bookingId){
+BookingSchema.pre("save", function () {
+  if (!this.bookingId) {
     this.bookingId = `BK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   }
-})
+});
 export const Booking = mongoose.model("Booking", BookingSchema);

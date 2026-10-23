@@ -8,15 +8,14 @@ import MyBookings from "./pages/MyBookings";
 
 // Owner
 import OwnerDashboard from "./pages/owner/Dashboard";
-import OwnerBookings from "./pages/owner/Bookings";
+
 import OwnerRestaurant from "./pages/owner/Restaurant";
 import OwnerTables from "./pages/owner/Tables";
 
 // Admin
 import AdminDashboard from "./pages/admin/Dashboard";
-import AdminUsers from "./pages/admin/Users";
 import AdminRestaurants from "./pages/admin/Restaurants";
-import AdminBookings from "./pages/admin/Bookings";
+
 
 // Layouts
 import CustomerLayout from "./layouts/CustomerLayout";
@@ -30,13 +29,29 @@ import Signup from "./components/Signup";
 import ConfirmReservation from "./pages/ConfirmReservation";
 import BookingSucess from "./components/BookingSucess";
 import ForgetPassword from "./components/ForgetPassword";
+import { GuestRoute } from "./components/GuestRoute";
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         {/* Public */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+      <Route
+  path="/login"
+  element={
+    <GuestRoute>
+      <Login />
+    </GuestRoute>
+  }
+/>
+
+<Route
+  path="/signup"
+  element={
+    <GuestRoute>
+      <Signup />
+    </GuestRoute>
+  }
+/>
         <Route path="/forgot-password" element={<ForgetPassword />} />
         {/* Customer */}
         <Route element={<CustomerLayout />}>
@@ -55,7 +70,6 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["owner"]} />}>
           <Route path="/owner" element={<OwnerLayout />}>
             <Route path="dashboard" element={<OwnerDashboard />} />
-            <Route path="bookings" element={<OwnerBookings />} />
             <Route path="restaurant" element={<OwnerRestaurant />} />
             <Route path="tables" element={<OwnerTables />} />
           </Route>
@@ -65,10 +79,8 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="users" element={<AdminUsers />} />
             <Route path="restaurants" element={<AdminRestaurants />} />
-            <Route path="bookings" element={<AdminBookings />} />
-          </Route>
+           </Route>
         </Route>
       </Routes>
     </BrowserRouter>

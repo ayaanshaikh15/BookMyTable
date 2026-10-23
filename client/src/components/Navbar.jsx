@@ -4,7 +4,8 @@ import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
 const Navbar = () => {
-  const { user } = useContext(AuthContext);
+  const API_URL = import.meta.env.VITE_API_URL;
+  const { user,setLoading,setUser } = useContext(AuthContext);
 const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,11 +17,34 @@ const [showUserMenu, setShowUserMenu] = useState(false);
 
   const isHomePage = location.pathname === "/";
 
-  const handleLogout = () => {
-    // logout();
-    setMobileMenu(false);
+
+const handleLogout = async () => {
+   const confirmsg=window.confirm('Are you sure you want to logout');
+  
+ 
+  if(confirmsg){
+    setLoading(true);
+  setMobileMenu(false);
+  try {
+    const response = await fetch(`${API_URL}/auth/logout`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error("Logout failed");
+    }
+
+    setUser(null);
     navigate("/");
-  };
+  
+  } catch (error) {
+    console.error("Error during logout:", error);
+  } finally {
+    setLoading(false);
+  }
+}
+};
 
   const closeMenu = () => {
     setMobileMenu(false);
@@ -94,13 +118,23 @@ const [showUserMenu, setShowUserMenu] = useState(false);
             >
               Discover
             </NavLink>
-
-            <NavLink
+            {user?.role ==="admin"?<NavLink
+              to="/admin/dashboard"
+              className={navClass}
+            >
+             Dashboard
+            </NavLink>:user?.role==="owner"?<NavLink
+              to="/owner/dashboard"
+              className={navClass}
+            >
+              Dashboard
+            </NavLink>:<NavLink
               to="/restaurants"
               className={navClass}
             >
               Restaurants
-            </NavLink>
+            </NavLink>}
+            
 
             {user?.role === "customer" && (
               <NavLink
@@ -148,7 +182,7 @@ const [showUserMenu, setShowUserMenu] = useState(false);
 
   {/* Small menu */}
   {showUserMenu && (
-    <div className="absolute right-0 top-10 z-50 w-52 rounded-xl border border-[#e5e7e1] bg-white p-2 shadow-lg">
+    <div onClick={()=>setShowUserMenu(!showUserMenu)} className="absolute right-0 top-10 z-50 w-52 rounded-xl border border-[#e5e7e1] bg-white p-2 shadow-lg">
       
       {/* Name + Email */}
       <div className="border-b border-[#e5e7e1] px-3 py-2">
@@ -162,12 +196,13 @@ const [showUserMenu, setShowUserMenu] = useState(false);
       </div>
 
       {/* My Bookings */}
-      <button
-        onClick={() => user.role=="customer"? navigate("/my-bookings") : user.role=="owner"? navigate("/owner/bookings") : navigate("/admin/bookings")}
+      {user.role=="customer" && <button
+        onClick={() =>  navigate("/my-bookings")}
         className="mt-1 w-full rounded-lg px-3 py-2 text-left text-xs text-[#333831] hover:bg-[#f7f8f5]"
       >
         My Bookings
-      </button>
+      </button> }
+      
 
       {/* Owner Portal */}
       {user.role === "owner" && (
@@ -250,7 +285,7 @@ const [showUserMenu, setShowUserMenu] = useState(false);
             {/* Menu Button */}
             <button
               type="button"
-              onClick={() => setMobileMenu(!mobileMenu)}
+              onClick={() => {setMobileMenu(!mobileMenu)}}
               aria-label="Toggle menu"
               aria-expanded={mobileMenu}
               className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
@@ -318,14 +353,30 @@ const [showUserMenu, setShowUserMenu] = useState(false);
               >
                 Discover
               </NavLink>
-
+              {user?.role==="customer" && 
               <NavLink
                 to="/restaurants"
                 onClick={closeMenu}
                 className={navClass}
               >
                 Restaurants
-              </NavLink>
+              </NavLink>}
+              {user?.role==="admin" && 
+              <NavLink
+                to="/admin/dashboard"
+                onClick={closeMenu}
+                className={navClass}
+              >
+                Dashboard
+              </NavLink>}
+              {user?.role==="owner" && 
+              <NavLink
+                to="/owner/dashboard"
+                onClick={closeMenu}
+                className={navClass}
+              >
+                Dashboard
+              </NavLink>}
 
               {user?.role === "customer" && (
                 <NavLink
@@ -381,7 +432,7 @@ const [showUserMenu, setShowUserMenu] = useState(false);
                           : "text-[#969b94]"
                       }`}
                     >
-                      Customer
+                      {user.role}
                       
                     </p>
                     

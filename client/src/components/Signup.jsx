@@ -2,9 +2,11 @@
 import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import Loader from "../components/Loader";
 
 const Signup = () => {
-  const { signup } = useContext(AuthContext);
+  const API_URL = import.meta.env.VITE_API_URL;
+  const { setUser,loading,setLoading } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -23,23 +25,61 @@ const Signup = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
 
-    try {
-      const user = await signup(form);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
 
-      if (user.role === "owner") {
+  try {
+    setLoading(true);
+    const data = await fetch(`${API_URL}/auth/signup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        role: form.role,
+      }),
+    });
+
+    const result = await data.json();
+
+    if (!data.ok) {
+      throw new Error(result.message || "Signup failed");
+    }
+
+    if (result.user) {
+      setUser(result.user);
+
+      if (result.user.role === "owner") {
         navigate("/owner/dashboard");
+      } else if (result.user.role === "admin") {
+        navigate("/admin/dashboard");
       } else {
         navigate("/");
       }
-    } catch (err) {
-      setError(err.message || "Unable to create account");
+    } else {
+      setLoading(false);
+      setError(result.message || "Signup failed");
     }
-  };
+    setLoading(false);
+  } catch (err) {
+    setLoading(false);
+    setError(err.message || "Signup failed");
+  }finally{
+    setLoading(false);
+  }
+};
 
+if(loading){
+  return (
+    <Loader/>
+  )
+}
+else{
   return (
     <div className="min-h-screen bg-[#f7f8f5] px-4 py-8 text-[#1d211d]">
 
@@ -187,6 +227,7 @@ const Signup = () => {
 
     </div>
   );
+}
 };
 
 export default Signup;

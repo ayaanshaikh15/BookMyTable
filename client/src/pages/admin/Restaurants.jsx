@@ -1,116 +1,72 @@
-import { useMemo, useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
+import Loader from "../../components/Loader";
+import { useLocation, useNavigate } from "react-router-dom";
+import Navbar from "../../components/Navbar";
 
 const AdminRestaurants = () => {
-  const [restaurants, setRestaurants] = useState([
-    {
-      id: "RES-001",
-      name: "The Olive Table",
-      owner: "Aarav Mehta",
-      email: "aarav@theolivetable.com",
-      location: "Belagavi, Karnataka",
-      cuisine: "Italian · Continental",
-      rating: 4.8,
-      bookings: 428,
-      tables: 18,
-      status: "Active",
-      joined: "12 Jan 2026",
-    },
-    {
-      id: "RES-002",
-      name: "Urban Fork",
-      owner: "Rohan Patil",
-      email: "rohan@urbanfork.com",
-      location: "Bengaluru, Karnataka",
-      cuisine: "Modern Indian",
-      rating: 4.7,
-      bookings: 391,
-      tables: 24,
-      status: "Active",
-      joined: "18 Feb 2026",
-    },
-    {
-      id: "RES-003",
-      name: "Casa Verde",
-      owner: "Meera Joshi",
-      email: "meera@casaverde.com",
-      location: "Mysuru, Karnataka",
-      cuisine: "Italian",
-      rating: 4.6,
-      bookings: 347,
-      tables: 20,
-      status: "Active",
-      joined: "03 Mar 2026",
-    },
-    {
-      id: "RES-004",
-      name: "Saffron House",
-      owner: "Vikram Rao",
-      email: "vikram@saffronhouse.com",
-      location: "Hubballi, Karnataka",
-      cuisine: "North Indian",
-      rating: 4.5,
-      bookings: 312,
-      tables: 16,
-      status: "Active",
-      joined: "22 Mar 2026",
-    },
-    {
-      id: "RES-005",
-      name: "The Garden Room",
-      owner: "Ananya Kulkarni",
-      email: "ananya@gardenroom.com",
-      location: "Bengaluru, Karnataka",
-      cuisine: "European",
-      rating: 4.4,
-      bookings: 186,
-      tables: 14,
-      status: "Pending",
-      joined: "14 Sep 2026",
-    },
-    {
-      id: "RES-006",
-      name: "Spice Route",
-      owner: "Karan Desai",
-      email: "karan@spiceroute.com",
-      location: "Mangaluru, Karnataka",
-      cuisine: "Indian · Asian",
-      rating: 4.3,
-      bookings: 164,
-      tables: 12,
-      status: "Suspended",
-      joined: "09 May 2026",
-    },
-    {
-      id: "RES-007",
-      name: "Basil & Stone",
-      owner: "Neha Shetty",
-      email: "neha@basilstone.com",
-      location: "Udupi, Karnataka",
-      cuisine: "Mediterranean",
-      rating: 4.7,
-      bookings: 152,
-      tables: 10,
-      status: "Active",
-      joined: "27 Jun 2026",
-    },
-  ]);
-
+  const [restaurants, setRestaurants] = useState([]);
+  const [error, setError] = useState("");
+const API_URL = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [restaurantLoading,setRestaurantLoading] = useState(false);
+  const [changeStatusLoading,setChangeStatusLoading]= useState(false);
+  const [newStatus, setNewStatus] = useState("");
+  const fetchRestaurants = async () => {
+    try {
+      setRestaurantLoading(true);
 
-  const stats = {
-    total: restaurants.length,
-    active: restaurants.filter((r) => r.status === "Active").length,
-    pending: restaurants.filter((r) => r.status === "Pending").length,
-    suspended: restaurants.filter((r) => r.status === "Suspended").length,
+      const response = await fetch(
+        `${API_URL}/admin/restaurants`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to fetch restaurants"
+        );
+      }
+
+      
+
+      const restaurantData = Array.isArray(data)
+        ? data
+        : data?.restaurants ||
+          data?.data ||
+          [];
+      setRestaurants(restaurantData);
+    } catch (error) {
+      console.error("Restaurants error:", error);
+      setError(error.message);
+    } finally {
+      setRestaurantLoading(false);
+    }
   };
 
+  useEffect(()=>{
+   fetchRestaurants();
+  },[])
+  
+  const stats = {
+  total: restaurants.length,
+  active: restaurants.filter((r) => r.status === "approved").length,
+  pending: restaurants.filter((r) => r.status === "pending").length,
+  suspended: restaurants.filter((r) => r.status === "rejected").length,
+};
+  
   const filteredRestaurants = useMemo(() => {
     return restaurants.filter((restaurant) => {
       const matchesSearch =
         restaurant.name.toLowerCase().includes(search.toLowerCase()) ||
-        restaurant.owner.toLowerCase().includes(search.toLowerCase()) ||
+        restaurant.owner?.name.toLowerCase().includes(search.toLowerCase()) ||
         restaurant.location.toLowerCase().includes(search.toLowerCase()) ||
         restaurant.cuisine.toLowerCase().includes(search.toLowerCase());
 
@@ -120,33 +76,85 @@ const AdminRestaurants = () => {
       return matchesSearch && matchesStatus;
     });
   }, [restaurants, search, statusFilter]);
+   const refreshRestaurant = async()=>{
+    await fetchRestaurants();
+   }
+   
+    const handleStatusChange = async (
+    restaurantId,
+    newStatus
+  ) => {
+    try {
+      
+      setError("");
+      setChangeStatusLoading(true)
+      const response = await fetch(
+        `${API_URL}/admin/restaurants/${restaurantId}/status`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: newStatus,
+          }),
+        }
+      );
 
-  const updateStatus = (id, status) => {
-    setRestaurants((prev) =>
-      prev.map((restaurant) =>
-        restaurant.id === id
-          ? { ...restaurant, status }
-          : restaurant
-      )
-    );
+      const data = await response.json();
 
-    if (selectedRestaurant?.id === id) {
-      setSelectedRestaurant((prev) => ({
-        ...prev,
-        status,
-      }));
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to update restaurant status"
+        );
+      }
+     
+      // Update UI immediately
+      setRestaurants((previousRestaurants) =>
+        previousRestaurants.map((restaurant) => {
+          const id =
+            restaurant._id
+
+          if (id === restaurantId) {
+            return {
+              ...restaurant,
+              status: newStatus,
+            };
+          }
+
+          return restaurant;
+        })
+      );
+      if (selectedRestaurant?._id === restaurantId) {
+  setSelectedRestaurant((prev) => ({
+    ...prev,
+    status: newStatus,
+  }));
+}
+  setSelectedRestaurant(null)
+  } catch (error) {
+      console.error(
+        "Status update error:",
+        error
+      );
+
+      setError(error.message);
+    } finally {
+      setChangeStatusLoading(false)
     }
   };
+  
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case "Active":
+      case "approved":
         return "border-[#dce8d8] bg-[#eef4eb] text-[#58704f]";
 
-      case "Pending":
+      case "pending":
         return "border-[#e7ded0] bg-[#f5f0e8] text-[#8a7050]";
 
-      case "Suspended":
+      case "rejected":
         return "border-[#eadcdc] bg-[#f6eeee] text-[#8a5d5d]";
 
       default:
@@ -154,12 +162,22 @@ const AdminRestaurants = () => {
     }
   };
 
-  return (
-    <main className="min-h-screen bg-[#f7f8f5] px-5 py-8 text-[#1d211d] lg:px-8">
-      <div className="mx-auto max-w-7xl">
+    if (restaurantLoading) {
+    return (
+      <div className="flex min-h-screen w-screen items-center justify-center bg-[#f7f8f5]">
+        <Loader />
+      </div>
+    );
+  }
 
+  return (
+    <main className="min-h-screen bg-[#f7f8f5]   text-[#1d211d] lg:px-8">
+      <Navbar/>
+      <div className="py-10">
+      <div className="mx-auto max-w-7xl">
+       
         {/* Header */}
-        <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-8 flex flex-col mt-5 gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-2 text-sm font-medium tracking-wide text-[#68755f]">
               Platform management
@@ -179,6 +197,7 @@ const AdminRestaurants = () => {
             onClick={() => {
               setSearch("");
               setStatusFilter("All");
+              refreshRestaurant();
             }}
             className="rounded-full border border-[#dfe2da] bg-white px-5 py-2.5 text-sm font-medium text-[#68755f] transition hover:border-[#68755f] hover:bg-[#fafbf9]"
           >
@@ -273,9 +292,9 @@ const AdminRestaurants = () => {
                 className="rounded-full border border-[#dfe2da] bg-white px-5 py-2.5 text-sm text-[#555b54] outline-none focus:border-[#68755f]"
               >
                 <option value="All">All restaurants</option>
-                <option value="Active">Active</option>
-                <option value="Pending">Pending</option>
-                <option value="Suspended">Suspended</option>
+                <option value="approved">Active</option>
+<option value="pending">Pending</option>
+<option value="rejected">Suspended</option>
               </select>
             </div>
 
@@ -304,6 +323,11 @@ const AdminRestaurants = () => {
 
           {/* Desktop Table */}
           <div className="hidden overflow-x-auto md:block">
+            {changeStatusLoading ?<>
+            <div className="flex justify-center items-center w-full ">
+            <Loader/>
+            </div>
+            </>:<>
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#eceee9] bg-[#fafbf9] text-left">
@@ -334,9 +358,10 @@ const AdminRestaurants = () => {
               </thead>
 
               <tbody>
+                  
                 {filteredRestaurants.map((restaurant) => (
                   <tr
-                    key={restaurant.id}
+                    key={restaurant._id}
                     className="border-b border-[#f0f1ed] last:border-0 hover:bg-[#fcfcfa]"
                   >
                     {/* Restaurant */}
@@ -365,7 +390,7 @@ const AdminRestaurants = () => {
                     {/* Owner */}
                     <td className="px-6 py-5">
                       <p className="text-sm text-[#555b54]">
-                        {restaurant.owner}
+                        {restaurant.owner?.name}
                       </p>
 
                       <p className="mt-1 text-xs text-[#969b94]">
@@ -412,8 +437,8 @@ const AdminRestaurants = () => {
                       <select
                         value={restaurant.status}
                         onChange={(e) =>
-                          updateStatus(
-                            restaurant.id,
+                          handleStatusChange(
+                            restaurant._id,
                             e.target.value
                           )
                         }
@@ -421,9 +446,9 @@ const AdminRestaurants = () => {
                           restaurant.status
                         )}`}
                       >
-                        <option>Active</option>
-                        <option>Pending</option>
-                        <option>Suspended</option>
+                        <option value="approved">Active</option>
+<option value="pending">Pending</option>
+<option value="rejected">Rejected</option>
                       </select>
                     </td>
 
@@ -442,12 +467,16 @@ const AdminRestaurants = () => {
                 ))}
               </tbody>
             </table>
+            </>}
+            
           </div>
-
-          {/* Mobile */}
-          <div className="divide-y divide-[#eceee9] md:hidden">
+         {changeStatusLoading ?<>
+         <div className="flex justify-center items-center w-full ">
+            <Loader/>
+            </div>
+         </>:<div className="divide-y divide-[#eceee9] md:hidden">
             {filteredRestaurants.map((restaurant) => (
-              <div key={restaurant.id} className="p-5">
+              <div key={restaurant._id} className="p-5">
 
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-3">
@@ -486,7 +515,7 @@ const AdminRestaurants = () => {
                     </p>
 
                     <p className="mt-1 text-sm text-[#555b54]">
-                      {restaurant.owner}
+                      {restaurant.owner?.name}
                     </p>
                   </div>
 
@@ -531,7 +560,9 @@ const AdminRestaurants = () => {
                 </button>
               </div>
             ))}
-          </div>
+          </div>}
+          {/* Mobile */}
+          
 
           {/* Empty State */}
           {filteredRestaurants.length === 0 && (
@@ -552,43 +583,11 @@ const AdminRestaurants = () => {
         </section>
 
         {/* Platform Summary */}
-        <section className="mt-6 grid gap-6 md:grid-cols-3">
+        <section className="mt-6 grid gap-6 md:grid-cols-1">
 
-          <div className="rounded-2xl border border-[#e5e7e1] bg-white p-6">
-            <p className="text-xs font-medium uppercase tracking-wider text-[#68755f]">
-              Total tables
-            </p>
+    
 
-            <p className="mt-2 font-serif text-3xl text-[#20251f]">
-              {restaurants.reduce(
-                (sum, restaurant) => sum + restaurant.tables,
-                0
-              )}
-            </p>
-
-            <p className="mt-2 text-sm text-[#858b84]">
-              Seating tables across all restaurants
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-[#e5e7e1] bg-white p-6">
-            <p className="text-xs font-medium uppercase tracking-wider text-[#68755f]">
-              Total bookings
-            </p>
-
-            <p className="mt-2 font-serif text-3xl text-[#20251f]">
-              {restaurants
-                .reduce(
-                  (sum, restaurant) => sum + restaurant.bookings,
-                  0
-                )
-                .toLocaleString()}
-            </p>
-
-            <p className="mt-2 text-sm text-[#858b84]">
-              Reservations generated by restaurants
-            </p>
-          </div>
+        
 
           <div className="rounded-2xl border border-[#e5e7e1] bg-white p-6">
             <p className="text-xs font-medium uppercase tracking-wider text-[#68755f]">
@@ -620,7 +619,7 @@ const AdminRestaurants = () => {
             <div className="flex items-start justify-between gap-5">
               <div className="flex items-center gap-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f1f3ed] font-serif text-lg text-[#68755f]">
-                  {selectedRestaurant.name
+                  {selectedRestaurant?.name
                     .split(" ")
                     .map((word) => word[0])
                     .join("")
@@ -655,7 +654,7 @@ const AdminRestaurants = () => {
                 </p>
 
                 <p className="mt-1 text-sm font-medium text-[#30362f]">
-                  {selectedRestaurant.owner}
+                  {selectedRestaurant.owner?.name}
                 </p>
               </div>
 
@@ -665,7 +664,7 @@ const AdminRestaurants = () => {
                 </p>
 
                 <p className="mt-1 text-sm font-medium text-[#30362f]">
-                  {selectedRestaurant.id}
+                  {selectedRestaurant._id}
                 </p>
               </div>
 
@@ -691,23 +690,15 @@ const AdminRestaurants = () => {
 
               <div className="rounded-2xl border border-[#eceee9] p-4">
                 <p className="text-xs text-[#969b94]">
-                  Tables
+                  TotalSeats
                 </p>
 
                 <p className="mt-1 text-sm text-[#555b54]">
-                  {selectedRestaurant.tables}
+                  {selectedRestaurant.totalSeats}
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-[#eceee9] p-4">
-                <p className="text-xs text-[#969b94]">
-                  Bookings
-                </p>
-
-                <p className="mt-1 text-sm text-[#555b54]">
-                  {selectedRestaurant.bookings}
-                </p>
-              </div>
+              
 
               <div className="rounded-2xl border border-[#eceee9] p-4">
                 <p className="text-xs text-[#969b94]">
@@ -737,7 +728,7 @@ const AdminRestaurants = () => {
               </p>
 
               <p className="mt-1 text-sm text-[#555b54]">
-                {selectedRestaurant.email}
+                {selectedRestaurant?.owner?.email}
               </p>
             </div>
 
@@ -748,32 +739,39 @@ const AdminRestaurants = () => {
               </p>
 
               <select
-                value={selectedRestaurant.status}
-                onChange={(e) =>
-                  updateStatus(
-                    selectedRestaurant.id,
-                    e.target.value
-                  )
-                }
-                className={`w-full rounded-xl border px-4 py-3 text-sm font-medium outline-none ${getStatusStyle(
-                  selectedRestaurant.status
-                )}`}
-              >
-                <option>Active</option>
-                <option>Pending</option>
-                <option>Suspended</option>
-              </select>
+        value={newStatus || selectedRestaurant.status}
+        onChange={(e) => setNewStatus(e.target.value)}
+       className={`w-full rounded-xl border px-4 py-3 text-sm font-medium outline-none ${getStatusStyle(
+    newStatus || selectedRestaurant.status
+  )}`}
+>
+  <option value="approved">Active</option>
+  <option value="pending">Pending</option>
+  <option value="rejected">Suspended</option>
+</select>
             </div>
 
             <button
-              onClick={() => setSelectedRestaurant(null)}
-              className="mt-6 w-full rounded-full bg-[#68755f] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#56634e]"
+  onClick={() => {
+    handleStatusChange(
+      selectedRestaurant._id,
+      newStatus || selectedRestaurant.status
+    );
+    
+  }}
+  disabled={
+    !newStatus ||
+    newStatus === selectedRestaurant.status ||
+    changeStatusLoading
+  }
+              className="mt-6 w-full rounded-full bg-[#68755f] px-5 py-3 text-sm font-medium text-white transition disabled:opacity-50 hover:bg-[#56634e]"
             >
-              Done
+              {changeStatusLoading ? "Updating..." : "Done"}
             </button>
           </div>
         </div>
       )}
+      </div>
     </main>
   );
 };

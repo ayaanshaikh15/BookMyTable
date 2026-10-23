@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import Loader from "./Loader";
 
 const ProtectedRoute = ({ allowedRoles }) => {
  const { user, loading } = useContext(AuthContext);
@@ -9,9 +10,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f7f8f5]">
-        <div className="text-sm text-[#68755f]">
-          Loading...
-        </div>
+        <Loader/>
       </div>
     );
   }

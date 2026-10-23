@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Pizza,
@@ -7,16 +7,20 @@ import {
   Soup,
   Utensils,
   Salad,
+
 } from "lucide-react";
+import RestaurantCard from "../components/RestaurantCard";
+import Loader from "../components/Loader";
 const Discover = () => {
   const [searchData, setSearchData] = useState({
     location: "",
     date: "",
     guests: "2",
   });
-
+  const [loading, setloading] = useState(false);
+  const [restaurants, setrestaurants] = useState([])
   const [email, setEmail] = useState("");
-
+   const API_URL = import.meta.env.VITE_API_URL;
  const categories = [
   {
     name: "Italian",
@@ -44,38 +48,32 @@ const Discover = () => {
   },
 ];
 
-  const restaurants = [
-    {
-      id: "1",
-      name: "The Olive Table",
-      location: "Belagavi, Karnataka",
-      cuisine: "Italian · Continental",
-      rating: "4.8",
-      reviews: "324 reviews",
-      image:
-        "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1200&q=85",
-    },
-    {
-      id: "2",
-      name: "Koi House",
-      location: "Belagavi, Karnataka",
-      cuisine: "Japanese · Sushi",
-      rating: "4.7",
-      reviews: "286 reviews",
-      image:
-        "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=1200&q=85",
-    },
-    {
-      id: "3",
-      name: "Maison 21",
-      location: "Belagavi, Karnataka",
-      cuisine: "French · European",
-      rating: "4.9",
-      reviews: "412 reviews",
-      image:
-        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=85",
-    },
-  ];
+
+
+  useEffect(() => {
+  const fetchFeaturedRestaurants = async () => {
+
+    try {
+      setloading(true)
+      const response = await fetch(`${API_URL}/restaurants/featured`);
+      const res = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          res.message || "Failed to fetch the featured restaurants"
+        );
+      }
+
+      setrestaurants(res);
+    } catch (e) {
+      console.error("Failed to fetch featured restaurants:", e);
+    }finally{
+      setloading(false)
+    }
+  };
+
+  fetchFeaturedRestaurants();
+}, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -250,7 +248,10 @@ const Discover = () => {
               <Link
                 key={category.name}
                 to="/restaurants"
-                className="group flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-[#e7e8e3] bg-[#fafbf9] px-4 transition duration-300 hover:-translate-y-1 hover:border-[#cbd1c5] hover:bg-[#f3f5f0] hover:shadow-sm"
+                className="group flex min-h-[150px] flex-col items-center justify-center rounded-2xl
+                 border border-[#e7e8e3] bg-[#fafbf9] 
+                 px-4 transition duration-300 hover:-translate-y-1 
+                 hover:border-[#cbd1c5] hover:bg-[#f3f5f0] hover:shadow-sm"
               >
 
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl shadow-sm ring-1 ring-[#e8e9e4] transition group-hover:scale-105">
@@ -322,92 +323,22 @@ const Discover = () => {
 
           </div>
 
-          {/* Exactly 3 restaurants */}
+
+          {loading ? <>
+          <div className="relative h-64 mt-30 overflow-hidden">
+            <Loader/>
+          </div>
+          
+          </>:
+          
           <div className="mt-12 grid gap-6 md:grid-cols-3">
-
+            
             {restaurants.map((restaurant) => (
-              <article
-                key={restaurant.id}
-                className="group overflow-hidden rounded-2xl border border-[#e5e7e1] bg-white"
-              >
-
-                {/* Image */}
-                <div className="relative h-64 overflow-hidden">
-
-                  <img
-                    src={restaurant.image}
-                    alt={restaurant.name}
-                    className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                  />
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
-
-                  {/* Rating */}
-                  <div className="absolute bottom-4 left-4 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#252a24]">
-                    ★ {restaurant.rating}
-                  </div>
-
-                </div>
-
-                {/* Content */}
-                <div className="p-5">
-
-                  <div className="flex items-start justify-between gap-4">
-
-                    <div>
-                      <h3 className="font-serif text-2xl text-[#20251f]">
-                        {restaurant.name}
-                      </h3>
-
-                      <p className="mt-1 text-xs text-[#858b84]">
-                        {restaurant.location}
-                      </p>
-                    </div>
-
-                    <span className="whitespace-nowrap text-[10px] text-[#858b84]">
-                      {restaurant.reviews}
-                    </span>
-
-                  </div>
-
-                  <p className="mt-4 text-xs text-[#687067]">
-                    {restaurant.cuisine}
-                  </p>
-
-                  {/* Reservation */}
-                  <div className="mt-5 border-t border-[#eceee9] pt-4">
-
-                    <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-[#9a9f98]">
-                      Quick reservation
-                    </p>
-
-                    <div className="flex flex-wrap gap-2">
-
-                      {[
-                        "7:00 PM",
-                        "7:30 PM",
-                        "8:00 PM",
-                        "8:30 PM",
-                      ].map((time) => (
-                        <Link
-                          key={time}
-                          to={`/restaurants/${restaurant.id}`}
-                          className="rounded-full border border-[#dfe2da] px-3 py-2 text-[10px] text-[#555d53] transition hover:border-[#68755f] hover:bg-[#68755f] hover:text-white"
-                        >
-                          {time}
-                        </Link>
-                      ))}
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </article>
+              <RestaurantCard key={restaurant._id} restaurant={restaurant} />
             ))}
 
           </div>
+}
 
           <div className="mt-8 text-center sm:hidden">
             <Link

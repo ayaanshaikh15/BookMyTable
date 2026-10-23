@@ -1,196 +1,394 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import Navbar from "../../components/Navbar";
+import Loader from "../../components/Loader";
+import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
-  const [period, setPeriod] = useState("This month");
+  const API_URL = import.meta.env.VITE_API_URL;
 
-  const stats = {
-    restaurants: 48,
-    customers: 1248,
-    bookings: 3826,
-    revenue: "₹8.42L",
+  const [stats, setStats] = useState({
+    restaurants: {
+      total: 0,
+    },
+    bookings: {
+      latest: 0,
+      total: 0,
+    },
+    users: {
+      customers: 0,
+      owners: 0,
+      total: 0,
+    },
+  });
+
+  const [restaurants, setRestaurants] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [restaurantLoading, setRestaurantLoading] = useState(false);
+
+  const [updatingId, setUpdatingId] = useState(null);
+
+  const [error, setError] = useState("");
+
+  // --------------------------------------------------
+  // Fetch dashboard stats
+  // --------------------------------------------------
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch(
+        `${API_URL}/admin/restaurants/stats`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to fetch dashboard statistics"
+        );
+      }
+
+      setStats({
+        restaurants: {
+          total: data?.restaurants?.total ?? 0,
+        },
+        bookings: {
+          latest: data?.bookings?.latest ?? 0,
+          total: data?.bookings?.total ?? 0,
+        },
+        users: {
+          customers: data?.users?.customers ?? 0,
+          owners: data?.users?.owners ?? 0,
+          total: data?.users?.total ?? 0,
+        },
+      });
+    } catch (error) {
+      console.error("Stats error:", error);
+      setError(error.message);
+    }
   };
 
-  const bookingData = useMemo(() => {
-    if (period === "This week") {
-      return [
-        { day: "Mon", value: 42 },
-        { day: "Tue", value: 58 },
-        { day: "Wed", value: 51 },
-        { day: "Thu", value: 74 },
-        { day: "Fri", value: 89 },
-        { day: "Sat", value: 106 },
-        { day: "Sun", value: 82 },
-      ];
+  // --------------------------------------------------
+  // Fetch all restaurants
+  // --------------------------------------------------
+
+  const fetchRestaurants = async () => {
+    try {
+      setRestaurantLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/admin/restaurants`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to fetch restaurants"
+        );
+      }
+
+      /*
+        Supports either:
+
+        [
+          {...},
+          {...}
+        ]
+
+        OR
+
+        {
+          restaurants: [...]
+        }
+
+        OR
+
+        {
+          data: [...]
+        }
+      */
+
+      const restaurantData = Array.isArray(data)
+        ? data
+        : data?.restaurants ||
+          data?.data ||
+          [];
+
+      setRestaurants(restaurantData);
+    } catch (error) {
+      console.error("Restaurants error:", error);
+      setError(error.message);
+    } finally {
+      setRestaurantLoading(false);
+    }
+  };
+
+  // --------------------------------------------------
+  // Initial loading
+  // --------------------------------------------------
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try{
+      setLoading(true);
+
+      await Promise.all([
+        fetchStats(),
+        fetchRestaurants(),
+      ]);
+
+    }catch(e){
+     console.error("Failed to fetch stats and Restaurants",e);
+    }finally{
+       setLoading(false);
+    }
+  }
+
+    loadDashboard();
+  }, []);
+
+  // --------------------------------------------------
+  // Change restaurant status
+  // --------------------------------------------------
+
+  const handleStatusChange = async (
+    restaurantId,
+    newStatus
+  ) => {
+    try {
+      setUpdatingId(restaurantId);
+      setError("");
+
+      const response = await fetch(
+        `${API_URL}/admin/restaurants/${restaurantId}/status`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: newStatus,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to update restaurant status"
+        );
+      }
+
+      // Update UI immediately
+      setRestaurants((previousRestaurants) =>
+        previousRestaurants.map((restaurant) => {
+          const id =
+            restaurant._id ||
+            restaurant.id;
+
+          if (id === restaurantId) {
+            return {
+              ...restaurant,
+              status: newStatus,
+            };
+          }
+
+          return restaurant;
+        })
+      );
+
+      // Refresh stats because restaurant count may change
+      await fetchStats();
+    } catch (error) {
+      console.error(
+        "Status update error:",
+        error
+      );
+
+      setError(error.message);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  // --------------------------------------------------
+  // Helpers
+  // --------------------------------------------------
+
+  const getRestaurantId = (restaurant) => {
+    return restaurant?._id || restaurant?.id;
+  };
+
+  const getRestaurantName = (restaurant) => {
+    return (
+      restaurant?.name ||
+      restaurant?.restaurantName ||
+      "Unnamed restaurant"
+    );
+  };
+
+  const getOwnerName = (restaurant) => {
+    if (typeof restaurant?.owner === "string") {
+      return restaurant.owner;
     }
 
-    if (period === "Last month") {
-      return [
-        { day: "1", value: 72 },
-        { day: "5", value: 94 },
-        { day: "10", value: 118 },
-        { day: "15", value: 105 },
-        { day: "20", value: 142 },
-        { day: "25", value: 128 },
-        { day: "30", value: 156 },
-      ];
+    if (restaurant?.owner?.name) {
+      return restaurant.owner.name;
     }
 
-    return [
-      { day: "Week 1", value: 210 },
-      { day: "Week 2", value: 286 },
-      { day: "Week 3", value: 318 },
-      { day: "Week 4", value: 392 },
-    ];
-  }, [period]);
+    if (restaurant?.owner?.username) {
+      return restaurant.owner.username;
+    }
 
-  const recentBookings = [
-    {
-      id: "TB-1048",
-      customer: "Rahul Sharma",
-      restaurant: "The Olive Table",
-      date: "18 Sep 2026",
-      time: "7:30 PM",
-      guests: 4,
-      amount: "₹1,200",
-      status: "Confirmed",
-    },
-    {
-      id: "TB-1047",
-      customer: "Priya Patil",
-      restaurant: "Urban Fork",
-      date: "18 Sep 2026",
-      time: "8:00 PM",
-      guests: 2,
-      amount: "₹850",
-      status: "Completed",
-    },
-    {
-      id: "TB-1046",
-      customer: "Aditya Kulkarni",
-      restaurant: "The Olive Table",
-      date: "19 Sep 2026",
-      time: "1:00 PM",
-      guests: 6,
-      amount: "₹1,800",
-      status: "Confirmed",
-    },
-    {
-      id: "TB-1045",
-      customer: "Sneha Joshi",
-      restaurant: "Casa Verde",
-      date: "19 Sep 2026",
-      time: "7:00 PM",
-      guests: 4,
-      amount: "₹1,450",
-      status: "Pending",
-    },
-    {
-      id: "TB-1044",
-      customer: "Karan Desai",
-      restaurant: "Urban Fork",
-      date: "20 Sep 2026",
-      time: "8:30 PM",
-      guests: 2,
-      amount: "₹900",
-      status: "Cancelled",
-    },
-  ];
+    if (restaurant?.owner?.email) {
+      return restaurant.owner.email;
+    }
 
-  const topRestaurants = [
-    {
-      name: "The Olive Table",
-      location: "Belagavi",
-      bookings: 428,
-      rating: 4.8,
-    },
-    {
-      name: "Urban Fork",
-      location: "Bengaluru",
-      bookings: 391,
-      rating: 4.7,
-    },
-    {
-      name: "Casa Verde",
-      location: "Mysuru",
-      bookings: 347,
-      rating: 4.6,
-    },
-    {
-      name: "Saffron House",
-      location: "Hubballi",
-      bookings: 312,
-      rating: 4.5,
-    },
-  ];
+    return "—";
+  };
+
+  const getLocation = (restaurant) => {
+    if (typeof restaurant?.location === "string") {
+      return restaurant.location;
+    }
+
+    if (restaurant?.address) {
+      return restaurant.address;
+    }
+
+    if (restaurant?.city) {
+      return restaurant.city;
+    }
+
+    return "—";
+  };
+
+  const normalizeStatus = (status) => {
+    return String(status || "pending").toLowerCase();
+  };
 
   const getStatusStyle = (status) => {
-    switch (status) {
-      case "Confirmed":
+    switch (normalizeStatus(status)) {
+      case "approved":
+      case "approve":
         return "border-[#dce8d8] bg-[#eef4eb] text-[#58704f]";
 
-      case "Completed":
-        return "border-[#dfe2da] bg-[#f3f4f0] text-[#68755f]";
-
-      case "Pending":
-        return "border-[#e7ded0] bg-[#f5f0e8] text-[#8a7050]";
-
-      case "Cancelled":
+      case "rejected":
+      case "reject":
         return "border-[#eadcdc] bg-[#f6eeee] text-[#8a5d5d]";
 
+      case "pending":
       default:
-        return "border-[#e1e4dd] bg-[#f7f8f5] text-[#777d76]";
+        return "border-[#e7ded0] bg-[#f5f0e8] text-[#8a7050]";
     }
   };
 
+  const getStatusLabel = (status) => {
+    switch (normalizeStatus(status)) {
+      case "approved":
+      case "approve":
+        return "Approved";
+
+      case "rejected":
+      case "reject":
+        return "Rejected";
+
+      case "pending":
+      default:
+        return "Pending";
+    }
+  };
+
+  // --------------------------------------------------
+  // Loading screen
+  // --------------------------------------------------
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen w-screen items-center justify-center bg-[#f7f8f5]">
+        <Loader />
+      </div>
+    );
+  }
+
+  // --------------------------------------------------
+  // UI
+  // --------------------------------------------------
+
   return (
-    <main className="min-h-screen bg-[#f7f8f5] px-5 py-8 text-[#1d211d] lg:px-8">
-      <div className="mx-auto max-w-7xl">
+    <main className="min-h-screen bg-[#f7f8f5]  text-[#1d211d] lg:px-8">
+      <Navbar />
+      <div className="py-10">
+      <div className="mx-auto max-w-7xl py-5">
+        
 
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="mb-2 text-sm font-medium tracking-wide text-[#68755f]">
-              Platform overview
-            </p>
+        {/* -------------------------------------------
+            HEADER
+        -------------------------------------------- */}
 
-            <h1 className="font-serif text-4xl tracking-tight text-[#20251f] sm:text-5xl">
-              Admin dashboard
-            </h1>
+        <div className="mb-8 mt-4">
+          <p className="mb-2 text-sm font-medium tracking-wide text-[#68755f]">
+            Platform overview
+          </p>
 
-            <p className="mt-3 text-sm leading-6 text-[#858b84]">
-              Keep track of your restaurants, customers, reservations, and
-              platform activity.
-            </p>
-          </div>
+          <h1 className="font-serif text-4xl tracking-tight text-[#20251f] sm:text-5xl">
+            Admin dashboard
+          </h1>
 
-          <select
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            className="w-fit rounded-full border border-[#dfe2da] bg-white px-5 py-2.5 text-sm text-[#555b54] outline-none transition focus:border-[#68755f]"
-          >
-            <option>This week</option>
-            <option>This month</option>
-            <option>Last month</option>
-          </select>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#858b84]">
+            Manage restaurants, monitor bookings, and keep
+            track of registered users.
+          </p>
         </div>
 
-        {/* Main Stats */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {/* -------------------------------------------
+            ERROR
+        -------------------------------------------- */}
 
+        {error && (
+          <div className="mb-6 flex items-center justify-between rounded-2xl border border-[#eadcdc] bg-[#f6eeee] px-5 py-4 text-sm text-[#8a5d5d]">
+            <span>{error}</span>
+
+            <button
+              onClick={() => setError("")}
+              className="ml-4 text-xs font-medium hover:underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* -------------------------------------------
+            THREE STAT CARDS
+        -------------------------------------------- */}
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* Restaurants */}
-          <div className="rounded-2xl border border-[#e5e7e1] bg-white p-5">
+
+          <div className="rounded-2xl border border-[#e5e7e1] bg-white p-6">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-[#858b84]">
                   Restaurants
                 </p>
 
-                <p className="mt-2 font-serif text-3xl text-[#20251f]">
-                  {stats.restaurants}
+                <p className="mt-2 font-serif text-4xl text-[#20251f]">
+                  {stats.restaurants.total}
                 </p>
               </div>
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1f3ed] text-[#68755f]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f1f3ed] text-[#68755f]">
                 <svg
                   className="h-5 w-5"
                   viewBox="0 0 24 24"
@@ -207,24 +405,64 @@ const AdminDashboard = () => {
             </div>
 
             <p className="mt-4 text-xs text-[#68755f]">
-              +6 this month
+              Registered restaurants
             </p>
           </div>
 
-          {/* Customers */}
-          <div className="rounded-2xl border border-[#e5e7e1] bg-white p-5">
+          {/* Bookings */}
+
+          <div className="rounded-2xl border border-[#e5e7e1] bg-white p-6">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-[#858b84]">
-                  Customers
+                  Bookings
                 </p>
 
-                <p className="mt-2 font-serif text-3xl text-[#20251f]">
-                  {stats.customers.toLocaleString()}
+                <p className="mt-2 font-serif text-4xl text-[#20251f]">
+                  {stats.bookings.total}
                 </p>
               </div>
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1f3ed] text-[#68755f]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f1f3ed] text-[#68755f]">
+                <svg
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                >
+                  <rect
+                    x="4"
+                    y="5"
+                    width="16"
+                    height="15"
+                    rx="2"
+                  />
+                  <path d="M8 3v4M16 3v4M4 10h16" />
+                </svg>
+              </div>
+            </div>
+
+            <p className="mt-4 text-xs text-[#68755f]">
+              {stats.bookings.latest} latest bookings
+            </p>
+          </div>
+
+          {/* Users */}
+
+          <div className="rounded-2xl border border-[#e5e7e1] bg-white p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-[#858b84]">
+                  Users
+                </p>
+
+                <p className="mt-2 font-serif text-4xl text-[#20251f]">
+                  {stats.users.total}
+                </p>
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f1f3ed] text-[#68755f]">
                 <svg
                   className="h-5 w-5"
                   viewBox="0 0 24 24"
@@ -241,411 +479,371 @@ const AdminDashboard = () => {
             </div>
 
             <p className="mt-4 text-xs text-[#68755f]">
-              +12.4% from last month
-            </p>
-          </div>
-
-          {/* Bookings */}
-          <div className="rounded-2xl border border-[#e5e7e1] bg-white p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-[#858b84]">
-                  Bookings
-                </p>
-
-                <p className="mt-2 font-serif text-3xl text-[#20251f]">
-                  {stats.bookings.toLocaleString()}
-                </p>
-              </div>
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1f3ed] text-[#68755f]">
-                <svg
-                  className="h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                >
-                  <rect x="4" y="5" width="16" height="15" rx="2" />
-                  <path d="M8 3v4M16 3v4M4 10h16" />
-                </svg>
-              </div>
-            </div>
-
-            <p className="mt-4 text-xs text-[#68755f]">
-              +8.7% from last month
-            </p>
-          </div>
-
-          {/* Revenue */}
-          <div className="rounded-2xl border border-[#e5e7e1] bg-white p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-[#858b84]">
-                  Platform revenue
-                </p>
-
-                <p className="mt-2 font-serif text-3xl text-[#20251f]">
-                  {stats.revenue}
-                </p>
-              </div>
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1f3ed] text-[#68755f]">
-                <svg
-                  className="h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                >
-                  <path d="M12 3v18" />
-                  <path d="M17 7.5c0-1.7-2-3-5-3s-5 1.3-5 3 1.7 2.7 5 3.5 5 1.8 5 3.5-2 3-5 3-5-1.3-5-3" />
-                </svg>
-              </div>
-            </div>
-
-            <p className="mt-4 text-xs text-[#68755f]">
-              +14.2% from last month
+              {stats.users.customers} customers ·{" "}
+              {stats.users.owners} owners
             </p>
           </div>
         </div>
 
-        {/* Chart + Activity */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        {/* -------------------------------------------
+            RESTAURANT MANAGEMENT
+        -------------------------------------------- */}
 
-          {/* Booking Chart */}
-          <section className="rounded-2xl border border-[#e5e7e1] bg-white p-6">
-            <div className="flex items-end justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-[#68755f]">
-                  Reservations
-                </p>
+        <section className="mt-6 overflow-hidden rounded-2xl border border-[#e5e7e1] bg-white">
+          {/* Section header */}
 
-                <h2 className="mt-1 font-serif text-2xl text-[#20251f]">
-                  Booking activity
-                </h2>
-              </div>
+          <div className="flex flex-col gap-3 border-b border-[#eceee9] p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-[#68755f]">
+                Administration
+              </p>
 
-              <p className="text-xs text-[#969b94]">
-                {period}
+              <h2 className="mt-1 font-serif text-2xl text-[#20251f]">
+                Restaurant management
+              </h2>
+
+              <p className="mt-1 text-sm text-[#969b94]">
+                Review and manage restaurant registration
+                requests.
               </p>
             </div>
 
-            {/* Chart */}
-            <div className="mt-8">
-              <div className="flex h-64 items-end gap-3 sm:gap-5">
-                {bookingData.map((item) => {
-                  const max = Math.max(
-                    ...bookingData.map((entry) => entry.value)
-                  );
+            <Link
+              to="/admin/restaurants"
+              className="text-xs font-medium text-[#68755f]"
+            >
+              View all restaurants →
+            </Link>
+          </div>
 
-                  const height = `${(item.value / max) * 100}%`;
+          {/* Restaurant loading */}
+
+          {restaurantLoading ? (
+            <div className="flex h-64 items-center justify-center">
+              <Loader />
+            </div>
+          ) : restaurants.length === 0 ? (
+            /* Empty state */
+
+            <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f1f3ed] text-[#68755f]">
+                <svg
+                  className="h-6 w-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                >
+                  <path d="M4 10h16" />
+                  <path d="M5 10v9h14v-9" />
+                  <path d="M3 10 5 4h14l2 6" />
+                </svg>
+              </div>
+
+              <h3 className="mt-4 font-serif text-xl text-[#20251f]">
+                No restaurants found
+              </h3>
+
+              <p className="mt-2 max-w-md text-sm text-[#969b94]">
+                There are currently no restaurants registered
+                on the platform.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Desktop table */}
+
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[#eceee9] text-left">
+                      <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-[#969b94]">
+                        Restaurant
+                      </th>
+
+                      <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-[#969b94]">
+                        Owner
+                      </th>
+
+                      <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-[#969b94]">
+                        Location
+                      </th>
+
+                      <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-[#969b94]">
+                        Status
+                      </th>
+
+                      <th className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wider text-[#969b94]">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-[#eceee9]">
+                    {restaurants.map((restaurant) => {
+                      const restaurantId =
+                        getRestaurantId(restaurant);
+
+                      const status =
+                        normalizeStatus(
+                          restaurant.status
+                        );
+
+                      const isUpdating =
+                        updatingId === restaurantId;
+
+                      return (
+                        <tr
+                          key={restaurantId}
+                          className="transition hover:bg-[#fcfcfa]"
+                        >
+                          {/* Restaurant */}
+
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f1f3ed] font-serif text-sm text-[#68755f]">
+                                {getRestaurantName(
+                                  restaurant
+                                )
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </div>
+
+                              <div>
+                                <p className="text-sm font-medium text-[#30362f]">
+                                  {getRestaurantName(
+                                    restaurant
+                                  )}
+                                </p>
+
+                                {restaurant?.email && (
+                                  <p className="mt-1 text-xs text-[#969b94]">
+                                    {restaurant.email}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Owner */}
+
+                          <td className="px-6 py-5">
+                            <p className="text-sm text-[#555b54]">
+                              {getOwnerName(restaurant)}
+                            </p>
+                          </td>
+
+                          {/* Location */}
+
+                          <td className="px-6 py-5">
+                            <p className="max-w-[180px] truncate text-sm text-[#777d76]">
+                              {getLocation(restaurant)}
+                            </p>
+                          </td>
+
+                          {/* Status */}
+
+                          <td className="px-6 py-5">
+                            <span
+                              className={`inline-flex rounded-full border px-3 py-1.5 text-[11px] font-medium ${getStatusStyle(
+                                status
+                              )}`}
+                            >
+                              {getStatusLabel(status)}
+                            </span>
+                          </td>
+
+                          {/* Actions */}
+
+                          <td className="px-6 py-5">
+                            <div className="flex justify-end">
+                              {status === "pending" ? (
+                                <div className="flex gap-2">
+                                  <button
+                                    disabled={isUpdating}
+                                    onClick={() =>
+                                      handleStatusChange(
+                                        restaurantId,
+                                        "approved"
+                                      )
+                                    }
+                                    className="rounded-full bg-[#68755f] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#56634e] disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    {isUpdating
+                                      ? "Updating..."
+                                      : "Approve"}
+                                  </button>
+
+                                  <button
+                                    disabled={isUpdating}
+                                    onClick={() =>
+                                      handleStatusChange(
+                                        restaurantId,
+                                        "rejected"
+                                      )
+                                    }
+                                    className="rounded-full border border-[#eadcdc] bg-[#f6eeee] px-4 py-2 text-xs font-medium text-[#8a5d5d] transition hover:bg-[#f2e5e5] disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-[#969b94]">
+                                  No action required
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards */}
+
+              <div className="divide-y divide-[#eceee9] md:hidden">
+                {restaurants.map((restaurant) => {
+                  const restaurantId =
+                    getRestaurantId(restaurant);
+
+                  const status =
+                    normalizeStatus(
+                      restaurant.status
+                    );
+
+                  const isUpdating =
+                    updatingId === restaurantId;
 
                   return (
                     <div
-                      key={item.day}
-                      className="flex h-full flex-1 flex-col justify-end"
+                      key={restaurantId}
+                      className="p-5"
                     >
-                      <div className="mb-2 text-center text-[10px] text-[#969b94]">
-                        {item.value}
+                      {/* Top */}
+
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f1f3ed] font-serif text-sm text-[#68755f]">
+                            {getRestaurantName(
+                              restaurant
+                            )
+                              .charAt(0)
+                              .toUpperCase()}
+                          </div>
+
+                          <div>
+                            <p className="text-sm font-medium text-[#30362f]">
+                              {getRestaurantName(
+                                restaurant
+                              )}
+                            </p>
+
+                            <p className="mt-1 text-xs text-[#969b94]">
+                              {getOwnerName(restaurant)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-medium ${getStatusStyle(
+                            status
+                          )}`}
+                        >
+                          {getStatusLabel(status)}
+                        </span>
                       </div>
 
-                      <div
-                        className="w-full rounded-t-xl bg-[#68755f] transition-all duration-500 hover:bg-[#56634e]"
-                        style={{ height }}
-                      />
+                      {/* Details */}
 
-                      <div className="mt-3 text-center text-[10px] text-[#969b94] sm:text-xs">
-                        {item.day}
+                      <div className="mt-4 rounded-xl bg-[#fafbf9] p-4">
+                        <p className="text-[11px] uppercase tracking-wider text-[#969b94]">
+                          Location
+                        </p>
+
+                        <p className="mt-1 text-sm text-[#555b54]">
+                          {getLocation(restaurant)}
+                        </p>
                       </div>
+
+                      {/* Actions */}
+
+                      {status === "pending" && (
+                        <div className="mt-4 grid grid-cols-2 gap-2">
+                          <button
+                            disabled={isUpdating}
+                            onClick={() =>
+                              handleStatusChange(
+                                restaurantId,
+                                "approved"
+                              )
+                            }
+                            className="rounded-full bg-[#68755f] px-4 py-2.5 text-xs font-medium text-white transition hover:bg-[#56634e] disabled:opacity-50"
+                          >
+                            {isUpdating
+                              ? "Updating..."
+                              : "Approve"}
+                          </button>
+
+                          <button
+                            disabled={isUpdating}
+                            onClick={() =>
+                              handleStatusChange(
+                                restaurantId,
+                                "rejected"
+                              )
+                            }
+                            className="rounded-full border border-[#eadcdc] bg-[#f6eeee] px-4 py-2.5 text-xs font-medium text-[#8a5d5d] transition hover:bg-[#f2e5e5] disabled:opacity-50"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
-            </div>
-          </section>
+            </>
+          )}
+        </section>
 
-          {/* Platform Activity */}
-          <section className="rounded-2xl border border-[#e5e7e1] bg-white p-6">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-[#68755f]">
-                Platform activity
-              </p>
+        {/* -------------------------------------------
+            FOOTER SUMMARY
+        -------------------------------------------- */}
 
-              <h2 className="mt-1 font-serif text-2xl text-[#20251f]">
-                Overview
-              </h2>
-            </div>
-
-            <div className="mt-7 space-y-6">
-
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-sm text-[#777d76]">
-                    Confirmed bookings
-                  </span>
-
-                  <span className="text-sm font-medium text-[#30362f]">
-                    72%
-                  </span>
-                </div>
-
-                <div className="h-2 overflow-hidden rounded-full bg-[#e9ebe6]">
-                  <div className="h-full w-[72%] rounded-full bg-[#68755f]" />
-                </div>
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-sm text-[#777d76]">
-                    Completed bookings
-                  </span>
-
-                  <span className="text-sm font-medium text-[#30362f]">
-                    61%
-                  </span>
-                </div>
-
-                <div className="h-2 overflow-hidden rounded-full bg-[#e9ebe6]">
-                  <div className="h-full w-[61%] rounded-full bg-[#7b866f]" />
-                </div>
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-sm text-[#777d76]">
-                    Customer retention
-                  </span>
-
-                  <span className="text-sm font-medium text-[#30362f]">
-                    84%
-                  </span>
-                </div>
-
-                <div className="h-2 overflow-hidden rounded-full bg-[#e9ebe6]">
-                  <div className="h-full w-[84%] rounded-full bg-[#68755f]" />
-                </div>
-              </div>
-
-              <div className="border-t border-[#eceee9] pt-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-[#30362f]">
-                      Active restaurants
-                    </p>
-
-                    <p className="mt-1 text-xs text-[#969b94]">
-                      Currently accepting reservations
-                    </p>
-                  </div>
-
-                  <p className="font-serif text-2xl text-[#20251f]">
-                    43
-                    <span className="ml-1 text-sm text-[#969b94]">
-                      / 48
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        {/* Recent Bookings + Top Restaurants */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-
-          {/* Recent Bookings */}
-          <section className="overflow-hidden rounded-2xl border border-[#e5e7e1] bg-white">
-
-            <div className="flex items-center justify-between border-b border-[#eceee9] p-6">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-[#68755f]">
-                  Latest activity
-                </p>
-
-                <h2 className="mt-1 font-serif text-2xl text-[#20251f]">
-                  Recent bookings
-                </h2>
-              </div>
-
-              <button className="text-xs font-medium text-[#68755f] hover:underline">
-                View all
-              </button>
-            </div>
-
-            <div className="divide-y divide-[#eceee9]">
-              {recentBookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  className="flex flex-col gap-4 p-5 transition hover:bg-[#fcfcfa] sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="flex items-center gap-3">
-
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f1f3ed] font-serif text-xs text-[#68755f]">
-                      {booking.customer
-                        .split(" ")
-                        .map((word) => word[0])
-                        .join("")
-                        .slice(0, 2)}
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-medium text-[#30362f]">
-                        {booking.customer}
-                      </p>
-
-                      <p className="mt-1 text-xs text-[#969b94]">
-                        {booking.restaurant} · {booking.guests} guests
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-5 sm:justify-end">
-
-                    <div className="text-left sm:text-right">
-                      <p className="text-xs text-[#777d76]">
-                        {booking.date}
-                      </p>
-
-                      <p className="mt-1 text-xs text-[#969b94]">
-                        {booking.time}
-                      </p>
-                    </div>
-
-                    <span
-                      className={`rounded-full border px-3 py-1.5 text-[11px] font-medium ${getStatusStyle(
-                        booking.status
-                      )}`}
-                    >
-                      {booking.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Top Restaurants */}
-          <section className="rounded-2xl border border-[#e5e7e1] bg-white">
-
-            <div className="border-b border-[#eceee9] p-6">
-              <p className="text-xs font-medium uppercase tracking-wider text-[#68755f]">
-                Performance
-              </p>
-
-              <h2 className="mt-1 font-serif text-2xl text-[#20251f]">
-                Top restaurants
-              </h2>
-            </div>
-
-            <div className="divide-y divide-[#eceee9]">
-              {topRestaurants.map((restaurant, index) => (
-                <div
-                  key={restaurant.name}
-                  className="flex items-center gap-4 p-5"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f1f3ed] font-serif text-sm text-[#68755f]">
-                    {String(index + 1).padStart(2, "0")}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-[#30362f]">
-                      {restaurant.name}
-                    </p>
-
-                    <p className="mt-1 text-xs text-[#969b94]">
-                      {restaurant.location} · {restaurant.bookings} bookings
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-1 text-sm text-[#555b54]">
-                    <span className="text-[#68755f]">★</span>
-                    {restaurant.rating}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t border-[#eceee9] p-5">
-              <button className="w-full rounded-full border border-[#dfe2da] py-2.5 text-xs font-medium text-[#68755f] transition hover:border-[#68755f] hover:bg-[#f7f8f5]">
-                Manage restaurants
-              </button>
-            </div>
-          </section>
-        </div>
-
-        {/* Quick Actions */}
-        <section className="mt-6 rounded-2xl border border-[#e5e7e1] bg-white p-6">
-          <div className="mb-5">
-            <p className="text-xs font-medium uppercase tracking-wider text-[#68755f]">
-              Administration
+        <div className="mb-8 mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-[#e5e7e1] bg-white p-5">
+            <p className="text-xs text-[#969b94]">
+              Customers
             </p>
 
-            <h2 className="mt-1 font-serif text-2xl text-[#20251f]">
-              Quick actions
-            </h2>
+            <p className="mt-1 font-serif text-2xl text-[#20251f]">
+              {stats.users.customers}
+            </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl border border-[#e5e7e1] bg-white p-5">
+            <p className="text-xs text-[#969b94]">
+              Restaurant owners
+            </p>
 
-            <button className="group rounded-2xl border border-[#eceee9] bg-[#fafbf9] p-5 text-left transition hover:border-[#cfd4ca] hover:bg-white">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef2ea] text-[#68755f]">
-                +
-              </div>
-
-              <p className="mt-4 text-sm font-medium text-[#30362f]">
-                Add restaurant
-              </p>
-
-              <p className="mt-1 text-xs leading-5 text-[#969b94]">
-                Register a new restaurant on Tablely.
-              </p>
-            </button>
-
-            <button className="group rounded-2xl border border-[#eceee9] bg-[#fafbf9] p-5 text-left transition hover:border-[#cfd4ca] hover:bg-white">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef2ea] text-[#68755f]">
-                ≡
-              </div>
-
-              <p className="mt-4 text-sm font-medium text-[#30362f]">
-                View bookings
-              </p>
-
-              <p className="mt-1 text-xs leading-5 text-[#969b94]">
-                Monitor all platform reservations.
-              </p>
-            </button>
-
-            <button className="group rounded-2xl border border-[#eceee9] bg-[#fafbf9] p-5 text-left transition hover:border-[#cfd4ca] hover:bg-white">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef2ea] text-[#68755f]">
-                ◇
-              </div>
-
-              <p className="mt-4 text-sm font-medium text-[#30362f]">
-                Manage customers
-              </p>
-
-              <p className="mt-1 text-xs leading-5 text-[#969b94]">
-                Review registered Tablely customers.
-              </p>
-            </button>
-
-            <button className="group rounded-2xl border border-[#eceee9] bg-[#fafbf9] p-5 text-left transition hover:border-[#cfd4ca] hover:bg-white">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef2ea] text-[#68755f]">
-                ⚙
-              </div>
-
-              <p className="mt-4 text-sm font-medium text-[#30362f]">
-                Platform settings
-              </p>
-
-              <p className="mt-1 text-xs leading-5 text-[#969b94]">
-                Configure platform-level settings.
-              </p>
-            </button>
-
+            <p className="mt-1 font-serif text-2xl text-[#20251f]">
+              {stats.users.owners}
+            </p>
           </div>
-        </section>
+
+          <div className="rounded-2xl border border-[#e5e7e1] bg-white p-5">
+            <p className="text-xs text-[#969b94]">
+              Latest bookings
+            </p>
+
+            <p className="mt-1 font-serif text-2xl text-[#20251f]">
+              {stats.bookings.latest}
+            </p>
+          </div>
+        </div>
+      </div>
       </div>
     </main>
   );

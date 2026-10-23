@@ -1,5 +1,6 @@
 
 import { Link } from "react-router-dom";
+import Navbar from "../../components/Navbar";
 
 const OwnerDashboard = () => {
   // Temporary dashboard data
@@ -104,12 +105,12 @@ const OwnerDashboard = () => {
     { day: "Sat", bookings: 46 },
     { day: "Sun", bookings: 34 },
   ];
-
+  
   return (
-    <main className="min-h-screen bg-[#f7f8f5] px-5 py-8 text-[#1d211d] lg:px-8">
-
-      <div className="mx-auto max-w-7xl">
-
+    <main className="min-h-screen bg-[#f7f8f5] px-5  text-[#1d211d] lg:px-8">
+     
+      <div className="mx-auto max-w-7xl mt-1.5">
+<Navbar/>
         {/* =====================================================
             HEADER
         ===================================================== */}

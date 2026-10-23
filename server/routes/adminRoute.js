@@ -3,5 +3,5 @@ import { getAllRestaurants, getStats, approveRestaurants } from '../controllers/
 const router = express.Router();
 router.get("/restaurants",getAllRestaurants);
 router.get("/restaurants/stats",getStats);
-router.post("/restaurants/:id/approve",approveRestaurants);
+router.patch("/restaurants/:id/status",approveRestaurants);
 export default router;

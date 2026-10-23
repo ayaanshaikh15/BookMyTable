@@ -141,3 +141,29 @@ export const getRestaurantsAvailablity = async (req, res) => {
     });
   }
 };
+
+export const getRestaurantsById = async (req,res)=>{
+  try{
+    const {id} = req.params;
+    const restaurant = await Restaurant.findById(id);
+    if(!restaurant){
+      return res.status(404).json({
+        message:"Restaurant not found"
+      })
+    }
+    if(restaurant.status !== "approved"){
+      res.status(400).json({"message":"restaurant is not approved"})
+    }
+
+    res.status(200).json(restaurant);
+  }catch(e){
+    console.error(
+      "Error fetching restaurant by id : ",
+      e.message
+    );
+
+    res.status(500).json({
+      message: e.message,
+    });
+  }
+}

@@ -26,7 +26,8 @@ const RestaurantCard = ({ restaurant }) => {
         </h3>
 
         <p className="mt-1 text-xs text-[#858b84]">
-          {restaurant.location}
+          {restaurant.location}<br/>
+          {restaurant.address}
         </p>
 
         <p className="mt-4 text-xs text-[#687067]">
@@ -35,7 +36,7 @@ const RestaurantCard = ({ restaurant }) => {
 
         <div className="mt-5 flex items-center justify-between border-t border-[#eceee9] pt-4">
           <span className="text-[10px] text-[#858b84]">
-            {restaurant.reviews} reviews
+            {restaurant.reviewCount} reviews
           </span>
 
           <Link

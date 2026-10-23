@@ -1,71 +1,46 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import Loader from "../components/Loader";
 
 const RestaurantDetails = () => {
   const { id } = useParams();
-
+  const API_URL = import.meta.env.VITE_API_URL;
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [guests, setGuests] = useState("2");
-  const [selectedTable, setSelectedTable] = useState(null);
-
+  const [availability, setavailability] = useState(null)
+  const [loadingAvailable, setloadingAvailable] = useState(false)
+  const [loading,setLoading]=useState(false)
   /*
    * Temporary restaurant data.
    * Later replace this with an API request using `id`.
    */
+  const [restaurant, setrestaurant] = useState([]);
 const navigate = useNavigate();
-  const restaurants = {
-    1: {
-      name: "The Olive Table",
-      location: "Belagavi, Karnataka",
-      cuisine: "Italian · Continental",
-      rating: "4.8",
-      reviews: "324 reviews",
-      price: "₹₹",
-      image:
-        "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1800&q=90",
-      description:
-        "The Olive Table brings together refined Italian and Continental cuisine in a warm and relaxed setting. Thoughtfully prepared dishes, fresh ingredients and an inviting atmosphere make it a perfect place for a memorable dining experience.",
-      hours: "11:00 AM – 10:30 PM",
-      address: "College Road, Belagavi, Karnataka",
-      phone: "+91 98765 43210",
-    },
-
-    2: {
-      name: "Koi House",
-      location: "Belagavi, Karnataka",
-      cuisine: "Japanese · Sushi",
-      rating: "4.7",
-      reviews: "286 reviews",
-      price: "₹₹₹",
-      image:
-        "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=1800&q=90",
-      description:
-        "Koi House offers a contemporary Japanese dining experience featuring sushi, fresh ingredients and carefully crafted favourites in a calm atmosphere.",
-      hours: "12:00 PM – 10:30 PM",
-      address: "Tilakwadi, Belagavi, Karnataka",
-      phone: "+91 98765 12345",
-    },
-
-    3: {
-      name: "Maison 21",
-      location: "Belagavi, Karnataka",
-      cuisine: "French · European",
-      rating: "4.9",
-      reviews: "412 reviews",
-      price: "₹₹₹",
-      image:
-        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1800&q=90",
-      description:
-        "Maison 21 combines elegant European flavours with a sophisticated dining environment designed for relaxed lunches, dinners and special occasions.",
-      hours: "12:00 PM – 11:00 PM",
-      address: "Camp, Belagavi, Karnataka",
-      phone: "+91 98765 67890",
-    },
-  };
-
-  const restaurant = restaurants[id] || restaurants[1];
+    useEffect(() => {
+    const fetchRestaurant = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`${API_URL}/restaurants/${id}/restaurant`);
+        const res = await response.json();
+  
+        if (!response.ok) {
+          throw new Error(
+            res.message || "Failed to fetch the featured restaurants"
+          );
+        }
+  
+        setrestaurant(res);
+      } catch (e) {
+        console.error("Failed to fetch  restaurant by id:", e);
+      }finally{
+        setLoading(false)
+      }
+    };
+  
+    fetchRestaurant();
+  }, []);
 
   /*
    * Temporary tables.
@@ -73,69 +48,71 @@ const navigate = useNavigate();
    * based on date, time and guest count.
    */
 
-  const tables = [
-    {
-      id: "T1",
-      number: "01",
-      capacity: 2,
-      position: "Window",
-    },
-    {
-      id: "T2",
-      number: "02",
-      capacity: 2,
-      position: "Indoor",
-    },
-    {
-      id: "T3",
-      number: "03",
-      capacity: 4,
-      position: "Window",
-    },
-    {
-      id: "T4",
-      number: "04",
-      capacity: 4,
-      position: "Indoor",
-    },
-    {
-      id: "T5",
-      number: "05",
-      capacity: 6,
-      position: "Private",
-    },
-    {
-      id: "T6",
-      number: "06",
-      capacity: 8,
-      position: "Private",
-    },
-  ];
   
-  const suitableTables = tables.filter(
-    (table) => table.capacity >= Number(guests)
-  );
+
 
   const handleReservation = () => {
-    if (!date || !time || !guests || !selectedTable) {
+    if (!date || !time || !guests ) {
       alert("Please select date, time, guests and a table.");
       return;
     }
+    
 navigate("/confirm-reservation", {
   state: {
-       id,
+      restaurantId:restaurant._id,
       name: restaurant.name,
       date,
       time,
       guests,
-      table: selectedTable,
       location: restaurant.location,
       cuisine: restaurant.cuisine,
       image: restaurant.image,
   },
 });
   }
+
+  useEffect(()=>{
+       const fetchAvailability = async ()=>{
+     try {
+       setloadingAvailable(true)
+        const response = await fetch(`${API_URL}/restaurants/${id}/availability?date=${date}`);
+        const res = await response.json();
+  
+        if (!response.ok) {
+          throw new Error(
+            res.message || "Failed to fetch the featured restaurants"
+          );
+        }
+  
+        setavailability(res);
+      } catch (e) {
+        console.error("Failed to fetch restaurant availability:", e);
+      }finally{
+        setloadingAvailable(false);
+      }
+  }
+  if(date!=""){
    
+  fetchAvailability();
+  }
+  },[date])
+ 
+ 
+   if(!restaurant || Object.keys(restaurant).length === 0 ){
+     return (
+      <><div className="w-screen h-screen flex justify-center items-center">
+        
+      <p className="bg-white text-gray-500 text-center">restaurant not found</p>
+      </div></>
+     )
+   }else if(loading){
+    return(
+      <div className="w-screen h-screen flex justify-center items-center">
+        
+      <Loader/>
+      </div>
+    )
+   }else
   return (
     <main className="min-h-screen bg-white text-[#1d211d]">
 
@@ -188,11 +165,11 @@ navigate("/confirm-reservation", {
               </span>
 
               <span className="rounded-full bg-black/30 px-3 py-1.5 text-[10px] backdrop-blur-sm">
-                {restaurant.reviews}
+                {restaurant.reviewCount}
               </span>
 
               <span className="rounded-full bg-black/30 px-3 py-1.5 text-[10px] backdrop-blur-sm">
-                {restaurant.price}
+                {restaurant.priceRange}
               </span>
 
             </div>
@@ -202,7 +179,8 @@ navigate("/confirm-reservation", {
             </h1>
 
             <p className="mt-2 text-sm text-white/80">
-              {restaurant.location}
+              {restaurant.location}<br/>
+              {restaurant.address}
             </p>
 
           </div>
@@ -320,7 +298,11 @@ navigate("/confirm-reservation", {
                     </p>
 
                     <p className="mt-2 text-xs leading-5 text-[#555d53]">
-                      {restaurant.hours}
+                      {restaurant.availableSlots.map((slot)=>(
+                        <span key={slot} className="bg-[#f7f8f5] text-[#68755f] px-2 py-1 border-1 m-[2px] rounded-full text-[10px]">
+                          {slot}
+                        </span>
+                      ))}
                     </p>
                   </div>
 
@@ -389,7 +371,7 @@ navigate("/confirm-reservation", {
         value={date}
         onChange={(e) => {
           setDate(e.target.value);
-          setSelectedTable(null);
+          
         }}
         min={new Date().toISOString().split("T")[0]}
         className="w-full rounded-lg border border-[#dfe2da] bg-white px-3 py-2 text-xs text-[#252a25] outline-none transition focus:border-[#68755f]"
@@ -397,7 +379,16 @@ navigate("/confirm-reservation", {
     </div>
 
     {/* Time */}
-    <div className="mt-3">
+{loadingAvailable && (<>
+ <div className="flex h-15 items-center justify-center">
+  <Loader />
+</div>
+</>)}
+   {availability === null ? (
+  <div className="my-2 text-[12px] mr-1 text-[#636662]">
+    <p>Select date to get availability</p>
+  </div>
+) :(<div className="mt-3">
       <label className="mb-1.5 block text-[11px] font-medium text-[#555d53]">
         Time
       </label>
@@ -406,110 +397,72 @@ navigate("/confirm-reservation", {
         value={time}
         onChange={(e) => {
           setTime(e.target.value);
-          setSelectedTable(null);
         }}
         className="w-full rounded-lg border border-[#dfe2da] bg-white px-3 py-2 text-xs text-[#252a25] outline-none transition focus:border-[#68755f]"
       >
         <option value="">Select time</option>
-        <option value="19:00">7:00 PM</option>
-        <option value="19:30">7:30 PM</option>
-        <option value="20:00">8:00 PM</option>
-        <option value="20:30">8:30 PM</option>
-        <option value="21:00">9:00 PM</option>
-      </select>
-    </div>
 
-    {/* Guests */}
-    <div className="mt-3">
-      <label className="mb-1.5 block text-[11px] font-medium text-[#555d53]">
-        Guests
-      </label>
-
-      <select
-        value={guests}
-        onChange={(e) => {
-          setGuests(e.target.value);
-          setSelectedTable(null);
-        }}
-        className="w-full rounded-lg border border-[#dfe2da] bg-white px-3 py-2 text-xs text-[#252a25] outline-none transition focus:border-[#68755f]"
-      >
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((number) => (
-          <option key={number} value={number}>
-            {number} {number === 1 ? "Guest" : "Guests"}
+        {availability.map((slot) => (
+          <option key={slot.time} value={slot.time}>
+            {slot.time}
           </option>
         ))}
       </select>
-    </div>
+    </div>)}
+    
+    {time && (
+      availability.find((slot) => slot.time === time)?.availableSeats == 0?(<>
+    <div className="my-2 text-[12px] mr-1 text-[#636662]">
+    <p>Restaurant is not available for this particular date</p>
+  </div>
+    </>):
+    (<><div className="mt-3">
+  <label className="mb-1.5 block text-[11px] font-medium text-[#555d53]">
+    Guests
+  </label>
 
-    {/* Tables */}
-    <div className="mt-5 border-t border-[#e5e7e1] pt-4">
+  <p className="mb-2 text-[11px] text-[#777d76]">
+    Available seats:{" "}
+    {availability.find((slot) => slot.time === time)?.availableSeats ?? 0}
+  </p>
 
-      <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold text-[#555d53]">
-          Available tables
-        </p>
+  <input
+  type="number"
+  min="1"
+  max={availability.find((slot) => slot.time === time)?.availableSeats ?? 0}
+  value={guests}
+  onChange={(e) => {
+    const value = e.target.value;
+    const availableSeats =
+      availability.find((slot) => slot.time === time)?.availableSeats ?? 0;
 
-        {date && time && (
-          <span className="text-[9px] text-[#969b94]">
-            {suitableTables.length} available
-          </span>
-        )}
-      </div>
+    if (value === "") {
+      setGuests("");
+      return;
+    }
 
-      {!date || !time ? (
-        <div className="mt-3 rounded-lg border border-dashed border-[#dfe2da] bg-white px-3 py-4 text-center">
-          <p className="text-[10px] text-[#858b84]">
-            Select a date and time to see available tables.
-          </p>
-        </div>
-      ) : suitableTables.length === 0 ? (
-        <div className="mt-3 rounded-lg border border-dashed border-[#dfe2da] bg-white px-3 py-4 text-center">
-          <p className="text-[10px] text-[#858b84]">
-            No suitable tables are available for this number of guests.
-          </p>
-        </div>
-      ) : (
-        <div className="mt-3 grid grid-cols-2 gap-2">
+    const numberOfGuests = Number(value);
 
-          {suitableTables.map((table) => {
-            const isSelected = selectedTable === table.id;
+    if (numberOfGuests >= 1 && numberOfGuests <= availableSeats) {
+      setGuests(value);
+    }
+  }}
+  className="w-full rounded-lg border border-[#dfe2da] bg-white px-3 py-2 text-xs text-[#252a25] outline-none transition focus:border-[#68755f]"
+  placeholder="Enter number of guests"
+/>
+</div></>))
+     
+   
+ }
+  
 
-            return (
-              <button
-                key={table.id}
-                type="button"
-                onClick={() => setSelectedTable(table.id)}
-                className={`rounded-lg border p-3 text-left transition ${
-                  isSelected
-                    ? "border-[#68755f] bg-[#f3f5f0] shadow-sm"
-                    : "border-[#dfe2da] bg-white hover:border-[#bfc6b9]"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-serif text-sm text-[#20251f]">
-                    Table {table.number}
-                  </span>
+  
 
-                  {isSelected && (
-                    <span className="text-[10px] text-[#68755f]">
-                      ✓
-                    </span>
-                  )}
-                </div>
 
-                <p className="mt-1 text-[9px] text-[#858b84]">
-                  {table.capacity} seats · {table.position}
-                </p>
-              </button>
-            );
-          })}
-
-        </div>
-      )}
-    </div>
+  
 
     {/* Summary */}
-    {selectedTable && (
+    {date && time && guests && (
       <div className="mt-4 rounded-lg bg-white p-3 ring-1 ring-[#e8e9e4]">
 
         <p className="text-[9px] font-semibold uppercase tracking-wider text-[#969b94]">
@@ -529,20 +482,11 @@ navigate("/confirm-reservation", {
           </div>
 
           <div className="flex justify-between text-[10px]">
-            <span className="text-[#858b84]">Guests</span>
+            <span className="text-[#858b84]">Seats</span>
             <span className="font-medium text-[#30362f]">{guests}</span>
           </div>
 
-          <div className="flex justify-between text-[10px]">
-            <span className="text-[#858b84]">Table</span>
-            <span className="font-medium text-[#30362f]">
-              {
-                tables.find(
-                  (table) => table.id === selectedTable
-                )?.number
-              }
-            </span>
-          </div>
+          
 
         </div>
       </div>

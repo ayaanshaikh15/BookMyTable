@@ -1,9 +1,9 @@
 import { Booking } from "../models/Bookings.js";
 import Restaurant from "../models/Restaurant.js";
-
+import {User} from '../models/User.js';
 export const createBookings = async (req, res) => {
   try {
-    const { restaurantId, date, time, occasion, specialRequests, guests } =
+    const { restaurantId, date, time, occasion, specialRequests, guests,phoneNo } =
       req.body;
 
     if (!restaurantId || !date || !time || !guests) {
@@ -34,7 +34,7 @@ export const createBookings = async (req, res) => {
 
     const requestedSeats = Number(guests);
     const bookingSeats = existingBookings.reduce((sum, b) => sum + b.guests, 0);
-
+   
     const totalseats = restaurant.totalSeats || 20;
 
     const availableSeats = totalseats - bookingSeats;
@@ -47,6 +47,8 @@ export const createBookings = async (req, res) => {
         });
       return;
     }
+    const user = await User.findById(req.user.id);
+
     const booking = await Booking.create({
       restaurantId,
       userId: req.user.id,
@@ -56,6 +58,9 @@ export const createBookings = async (req, res) => {
       specialRequests,
       guests,
       status: "confirmed",
+      username:user.name,
+      phoneNo,
+      email:user.email
     });
 
     const populatedBookings = await booking.populate(

@@ -1,28 +1,15 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import Loader from "../components/Loader";
 
 const ConfirmReservation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
+  const [loading, setloading] = useState(false)
+  const API_URL = import.meta.env.VITE_API_URL;
   // Data can later come from RestaurantDetails / booking state
-  const reservation = location.state || {
-    restaurant: {
-      id: "1",
-      name: "The Olive Table",
-      location: "Belagavi, Karnataka",
-      cuisine: "Italian · Continental",
-      image:
-        "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1000&q=85",
-    },
-    date: "2026-09-25",
-    time: "7:30 PM",
-    guests: "2",
-  };
- console.log("Reservation:", reservation);
+  const reservation = location.state ;
   const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
     phone: "",
     occasion: "None",
     requests: "",
@@ -33,7 +20,7 @@ const ConfirmReservation = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
+   
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -54,31 +41,62 @@ const ConfirmReservation = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
-
+     
     if (
-      !formData.fullName ||
-      !formData.email ||
       !formData.phone
     ) {
       setError("Please fill in all required details.");
       return;
     }
 
-    const bookingData = {
-      ...reservation,
-      guestDetails: formData,
-    };
+    try{
+      setloading(true);
+      const response = await fetch(`${API_URL}/bookings`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  credentials: "include",
+  body: JSON.stringify({
+    occasion :formData.occasion,
+    specailRequests:formData.requests,
+    phoneNo:formData.phone,
+    ...reservation,
+  }),
+});
 
-    console.log("Reservation:", bookingData);
+if (!response.ok) {
+  throw new Error("Failed to fetch");
+}
 
-    // Later connect this to your backend
+const res = await response.json();
+
+
+// Later connect this to your backend
     navigate("/booking-success", {
-      state: bookingData,
+      state: res,
     });
+    }catch(e){
+        setError("failed to book")
+    }finally{
+     setloading(false);
+    }
+
+
+
+  
   };
 
+  if(loading){
+    return (
+      <div className="w-screen h-screen flex justify-center items-center">
+        
+      <Loader/>
+      </div>
+    )
+  }else
   return (
     <main className="min-h-screen bg-[#f7f8f5] px-4 py-8 text-[#20251f] sm:px-6 lg:px-10 lg:py-12">
       <div className="mx-auto max-w-7xl">
@@ -318,42 +336,7 @@ const ConfirmReservation = () => {
               className="mt-6"
             >
 
-              {/* Name + Email */}
-              <div className="grid gap-5 sm:grid-cols-2">
-
-                {/* Full Name */}
-                <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-wider text-[#858b84]">
-                    Full name
-                  </label>
-
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    placeholder="Enter your full name"
-                    className="mt-2 w-full border-b border-[#dfe2da] bg-transparent px-0 py-3 text-sm text-[#30362f] outline-none transition placeholder:text-[#aaaFA9] focus:border-[#68755f]"
-                  />
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-wider text-[#858b84]">
-                    Email address
-                  </label>
-
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="you@example.com"
-                    className="mt-2 w-full border-b border-[#dfe2da] bg-transparent px-0 py-3 text-sm text-[#30362f] outline-none transition placeholder:text-[#aaaFA9] focus:border-[#68755f]"
-                  />
-                </div>
-              </div>
-
+            
               {/* Phone + Occasion */}
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
 

@@ -7,13 +7,13 @@ function BookingSucess() {
   const navigate = useNavigate();
 
   const booking = location.state;
+  console.log(booking)
 
   const isValid =
-    booking?.name &&
+    booking?.restaurantId.name &&
     booking?.date &&
     booking?.time &&
-    booking?.guests &&
-    booking?.table;
+    booking?.guests
 
   if (!isValid) {
     return (
@@ -76,7 +76,7 @@ function BookingSucess() {
         {/* Restaurant */}
         <div className="mt-5 flex gap-3">
           <img
-            src={booking.image}
+            src={booking.restaurantId.image}
             alt={booking.name}
             className="h-16 w-16 rounded-xl object-cover"
           />
@@ -101,7 +101,7 @@ function BookingSucess() {
           <div>
             <p className="text-[9px] text-[#969b94]">DATE</p>
             <p className="mt-0.5 text-xs font-medium text-[#30362f]">
-              {booking.date}
+              {booking.date.toString().substring(0, 10)}
             </p>
           </div>
 
@@ -119,19 +119,14 @@ function BookingSucess() {
             </p>
           </div>
 
-          <div>
-            <p className="text-[9px] text-[#969b94]">TABLE</p>
-            <p className="mt-0.5 text-xs font-medium text-[#30362f]">
-              {booking.table}
-            </p>
-          </div>
+          
         </div>
 
         {/* Booking ID */}
         <div className="mt-3 flex items-center justify-between text-[10px]">
           <span className="text-[#969b94]">Booking ID</span>
           <span className="font-medium text-[#30362f]">
-            #{booking.id}
+            #{booking.bookingId}
           </span>
         </div>
 

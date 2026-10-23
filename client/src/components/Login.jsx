@@ -2,9 +2,11 @@
 import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import Loader from "../components/Loader";
 
 const Login = () => {
-  const { login } = useContext(AuthContext);
+  const API_URL = import.meta.env.VITE_API_URL;
+  const { setUser,loading,setLoading } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -24,20 +26,57 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
+        
     try {
-      const user = await login(form);
+      setLoading(true);
+      const data = await fetch(`${API_URL}/auth/login`, {
+  method: "POST",
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+   
+    email:form.email,
+    password:form.password,
+   
+  }),
+});
 
-      if (user.role === "owner") {
+   const result = await data.json();
+   if (!data.ok) {
+    throw new Error(result.message || "Login failed");
+  }
+    
+  if(result.user){
+     setUser(result.user);
+      if (result.user.role === "owner") {
         navigate("/owner/dashboard");
-      } else {
+      } else if(result.user.role === "admin") {
+        navigate("/admin/dashboard");
+      }else{
         navigate("/");
       }
+    }else
+    {
+      setLoading(false);
+      setError(result.message || "Invalid email or password");
+    }
+    setLoading(false);
     } catch (err) {
+      setLoading(false);
       setError(err.message || "Invalid email or password");
+    }finally{
+      setLoading(false);
     }
   };
+  if(loading){
+    return (
 
+      <Loader/>
+    )
+  }
+  else{ 
   return (
     <div className="min-h-screen bg-[#f7f8f5] px-4 py-8 text-[#1d211d]">
 
@@ -174,6 +213,7 @@ const Login = () => {
 
     </div>
   );
+  }
 };
 
 export default Login;
