@@ -8,9 +8,9 @@ import MyBookings from "./pages/MyBookings";
 
 // Owner
 import OwnerDashboard from "./pages/owner/Dashboard";
+import Bookings from './pages/owner/Bookings'
 
-import OwnerRestaurant from "./pages/owner/Restaurant";
-import OwnerTables from "./pages/owner/Tables";
+import CreateRestaurant from "./pages/owner/CreateRestaurant";
 
 // Admin
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -30,6 +30,7 @@ import ConfirmReservation from "./pages/ConfirmReservation";
 import BookingSucess from "./components/BookingSucess";
 import ForgetPassword from "./components/ForgetPassword";
 import { GuestRoute } from "./components/GuestRoute";
+import OwnerRestaurant from "./pages/owner/Restaurant";
 function App() {
   return (
     <BrowserRouter>
@@ -70,8 +71,9 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={["owner"]} />}>
           <Route path="/owner" element={<OwnerLayout />}>
             <Route path="dashboard" element={<OwnerDashboard />} />
+            <Route path="bookings" element={<Bookings />} />
+            <Route path="create-restaurant" element={<CreateRestaurant />} />
             <Route path="restaurant" element={<OwnerRestaurant />} />
-            <Route path="tables" element={<OwnerTables />} />
           </Route>
         </Route>
 

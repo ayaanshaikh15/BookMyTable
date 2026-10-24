@@ -12,20 +12,7 @@ const uploadToCloudinary = async(file) => {
 
     return result;
 };
-//In this image uploading problem is there and needs to be solved
-export const getRestaurant = async (req, res) => {
-  try {
-    const restaurant = await Restaurant.findOne({ owner: req.user?.id });
 
-    if (!restaurant) {
-      return res.status(404).json({ message: "Restaurant not found " });
-    }
-    res.status(200).json(restaurant);
-  } catch (e) {
-    console.error("Error : ", e.message);
-    res.status(500).json({ message: e.message });
-  }
-};
 
 export const createRestaurant = async (req, res) => {
   try {
@@ -207,11 +194,34 @@ const restaurant = await Restaurant.findOne({ owner: req.user?.id });
     if (!restaurant) {
       return res.status(404).json({ message: "Restaurant not found " });
     }
-    const bookings = await Booking.findOne({restaurantId : restaurant.id}).populate("user","name email phone").sort({date:-1,time:-1});
-
+   const bookings = await Booking.find({ restaurantId: restaurant._id })
+  .populate("userId", "name email phone")
+  .sort({ date: -1, time: -1 });
     res.json(bookings)
   } catch (e) {
     console.error("Error : ", e.message);
     res.status(500).json({ message: e.message });
   }
 };
+export const checkOwner =async(req,res)=>{
+    try{
+      const {id}= req.params
+        const restaurant = await Restaurant.findOne({ owner: id });
+
+    if (!restaurant) {
+      return res.status(200).json({
+  success: true,
+  hasRestaurant: false,
+  restaurant: null,
+});
+    }
+   return res.status(200).json({
+  success: true,
+  hasRestaurant: true,
+  restaurant,
+});;
+    }catch(e){
+    console.error("Error : ", e.message);
+    res.status(500).json({ message: e.message });
+    }
+}

@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useContext,
@@ -31,6 +30,7 @@ function AuthProvider({ children }) {
 
         const data = await response.json();
         setUser(data.user);
+        
       } catch (error) {
         console.error("Failed to restore user:", error);
         setUser(null);
