@@ -21,12 +21,17 @@ const RestaurantCard = ({ restaurant }) => {
       </Link>
 
       <div className="p-5">
+        <div className="flex justify-between items-center">
         <h3 className="font-serif text-2xl text-[#20251f]">
           {restaurant.name}
         </h3>
-
+        <p className="text-[12px] ">
+         <span className=" text-gray-700 font-bold "> Price Range :</span> <span className="text-gray-700">{restaurant.priceRange}</span>
+        </p>
+        </div>
+        
         <p className="mt-1 text-xs text-[#858b84]">
-          {restaurant.location}<br/>
+
           {restaurant.address}
         </p>
 

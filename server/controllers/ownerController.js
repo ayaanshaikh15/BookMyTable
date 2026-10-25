@@ -189,7 +189,8 @@ export const UpdateStatus = async (req, res) => {
 
 export const getOwnersBookings = async (req, res) => {
   try {
-const restaurant = await Restaurant.findOne({ owner: req.user?.id });
+    const userId = req.user?.id || req.user?._id
+const restaurant = await Restaurant.findOne({ owner: userId});
 
     if (!restaurant) {
       return res.status(404).json({ message: "Restaurant not found " });

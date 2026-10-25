@@ -30,8 +30,13 @@ const navigate = useNavigate();
             res.message || "Failed to fetch the featured restaurants"
           );
         }
-  
+
         setrestaurant(res);
+         window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
       } catch (e) {
         console.error("Failed to fetch  restaurant by id:", e);
       }finally{
@@ -313,8 +318,8 @@ navigate("/confirm-reservation", {
             </div>
 
             {/* Contact */}
-
-            <div className="mt-6 rounded-2xl border border-[#e5e7e1] bg-white p-5">
+            {restaurant?.phone || restaurant?.email &&
+               <div className="mt-6 rounded-2xl border border-[#e5e7e1] bg-white p-5">
 
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 
@@ -323,20 +328,20 @@ navigate("/confirm-reservation", {
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-[#969b94]">
                     Contact
                   </p>
-
-                  <p className="mt-2 text-sm text-[#555d53]">
-                    {restaurant.phone}
-                  </p>
-
+                  {restaurant.phone &&  <p className="mt-2 text-sm text-[#555d53]">
+                    owner's phone no.{restaurant?.phone}
+                  </p>}
+                 {restaurant.email && <p className="mt-2 text-sm text-[#555d53]">
+                    owner's email: {restaurant?.email}
+                  </p> }
+                 
                 </div>
-
-                <button className="w-fit rounded-full border border-[#dfe2da] px-5 py-2.5 text-xs font-medium text-[#68755f] transition hover:bg-[#f7f8f5]">
-                  Get directions
-                </button>
 
               </div>
 
             </div>
+            }
+         
 
           </section>
 

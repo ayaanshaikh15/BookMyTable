@@ -131,7 +131,7 @@ const Footer = () => {
           <div className="mt-12 flex flex-col gap-3 border-t border-[#e5e7e1] pt-6 sm:flex-row sm:items-center sm:justify-between">
 
             <p className="text-[11px] text-[#969b94]">
-              © 2026 Tablely. All rights reserved.
+              © 2026 BookMyTable. All rights reserved.
             </p>
 
             <p className="text-[11px] text-[#969b94]">

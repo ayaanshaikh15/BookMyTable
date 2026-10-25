@@ -1,17 +1,22 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-
+import Loader from "../components/Loader";
+import { useLocation } from "react-router-dom";
 const Restaurants = () => {
   const API_URL = import.meta.env.VITE_API_URL;
+   const location = useLocation();
+   const searchData = location?.state;
   const [search, setSearch] = useState({
-    location: "",
-    cuisine: "",
-    guests: "2",
+    location: searchData?.location || "",
+    cuisine: searchData?.cuisine|| "",
+    guests: searchData?.guests||"2",
   });
   const [restaurants, setrestaurants] = useState([]);
   const [sortBy, setSortBy] = useState("recommended");
-
+  const [loading, setloading] = useState(false)
+ 
+ 
   const [filters, setFilters] = useState({
     cuisine: "",
     rating: "",
@@ -21,6 +26,7 @@ const Restaurants = () => {
  useEffect(() => {
   const fetchFeaturedRestaurants = async () => {
     try {
+      setloading(true)
       const response = await fetch(`${API_URL}/restaurants`);
       const res = await response.json();
 
@@ -31,8 +37,15 @@ const Restaurants = () => {
       }
 
       setrestaurants(res);
+       window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
     } catch (e) {
       console.error("Failed to fetch featured restaurants:", e);
+    }finally{
+      setloading(false)
     }
   };
 
@@ -96,7 +109,7 @@ const Restaurants = () => {
     }
 
     return result;
-  }, [search, filters, sortBy]);
+  }, [search, filters, sortBy,restaurants]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -459,7 +472,7 @@ const Restaurants = () => {
         {/* =====================================================
             RESTAURANT GRID
         ===================================================== */}
-
+        {loading ? <Loader/>:<>
         {filteredRestaurants.length > 0 ? (
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 
@@ -575,6 +588,8 @@ const Restaurants = () => {
 
           </div>
         )}
+        </> }
+        
 
       </section>
 

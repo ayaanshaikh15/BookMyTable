@@ -14,7 +14,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
-
+import Navbar from '../../components/Navbar';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const statusStyles = {
@@ -31,66 +31,65 @@ export default function OwnerDashboard() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+const userId = user?.id || user?._id;
+useEffect(() => {
+  if (!userId) return;
 
-  useEffect(() => {
-    if (!user?._id) return;
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-    const fetchDashboard = async () => {
-      try {
-        setLoading(true);
-        setError("");
+      const [restaurantResponse, bookingsResponse] = await Promise.all([
+        fetch(`${API_URL}/owner/restaurant/${userId}`, {
+          credentials: "include",
+        }),
+        fetch(`${API_URL}/owner/bookings`, {
+          credentials: "include",
+        }),
+      ]);
 
-        const [restaurantResponse, bookingsResponse] = await Promise.all([
-          fetch(`${API_URL}/owner/restaurant/${user._id}`, {
-            credentials: "include",
-          }),
-          fetch(`${API_URL}/owner/bookings`, {
-            credentials: "include",
-          }),
-        ]);
+      const restaurantData = await restaurantResponse.json();
+      const bookingsData = await bookingsResponse.json();
 
-        const restaurantData = await restaurantResponse.json();
-
-        if (!restaurantResponse.ok) {
-          throw new Error(
-            restaurantData.message || "Failed to load restaurant"
-          );
-        }
-
-        if (!restaurantData.hasRestaurant) {
-          navigate("/owner/create-restaurant", { replace: true });
-          return;
-        }
-
-        const bookingsData = await bookingsResponse.json();
-
-        if (!bookingsResponse.ok) {
-          throw new Error(
-            bookingsData.message || "Failed to load bookings"
-          );
-        }
-
-        setRestaurant(restaurantData.restaurant);
-
-        // The backend should return an array of bookings.
-        setBookings(
-          Array.isArray(bookingsData)
-            ? bookingsData
-            : Array.isArray(bookingsData.bookings)
-              ? bookingsData.bookings
-              : bookingsData._id
-                ? [bookingsData]
-                : []
+      if (!restaurantResponse.ok) {
+        throw new Error(
+          restaurantData.message || "Failed to load restaurant"
         );
-      } catch (err) {
-        setError(err.message || "Something went wrong");
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchDashboard();
-  }, [user?._id, navigate]);
+      if (!bookingsResponse.ok) {
+        throw new Error(
+          bookingsData.message || "Failed to load bookings"
+        );
+      }
+
+      if (!restaurantData.hasRestaurant) {
+        navigate("/owner/create-restaurant", { replace: true });
+        return;
+      }
+
+      setRestaurant(restaurantData.restaurant);
+
+      setBookings(
+        Array.isArray(bookingsData)
+          ? bookingsData
+          : Array.isArray(bookingsData.bookings)
+            ? bookingsData.bookings
+            : bookingsData?._id
+              ? [bookingsData]
+              : []
+      );
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    } finally {
+
+      setLoading(false);
+    }
+  };
+
+  fetchDashboard();
+}, [userId, navigate]);
 
   if (loading) {
     return (
@@ -134,6 +133,7 @@ export default function OwnerDashboard() {
 
   return (
     <div className="min-h-screen bg-[#f7f8f5] text-[#1d211d]">
+      <Navbar/>
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
           <div>

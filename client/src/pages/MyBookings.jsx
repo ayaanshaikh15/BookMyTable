@@ -32,7 +32,6 @@ const MyBookings = () => {
         }
   
         setrestaurant(res);
-        console.log(res)
         setupcomming(res.filter((e) => e.status === "confirmed"));
         setcancelled(res.filter((e) => e.status === "cancelled"));
         setcomplted(res.filter((e) => e.status === "completed"));

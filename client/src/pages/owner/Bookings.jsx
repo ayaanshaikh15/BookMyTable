@@ -8,7 +8,7 @@ import {
   Users,
   RefreshCw,
 } from "lucide-react";
-
+import Navbar from '../../components/Navbar';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const filters = ["all", "confirmed", "completed", "cancelled"];
@@ -120,9 +120,10 @@ export default function OwnerBookings() {
 
   return (
     <div className="min-h-screen bg-[#f7f8f5] text-[#1d211d]">
+       <Navbar/>
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <Link
-          to="/owner"
+          to="/owner/dashboard"
           className="inline-flex items-center gap-2 text-sm text-[#68755f] hover:text-[#56634e]"
         >
           <ArrowLeft size={17} /> Dashboard

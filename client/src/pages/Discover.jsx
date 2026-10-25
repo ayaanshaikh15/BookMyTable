@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Pizza,
@@ -11,16 +11,20 @@ import {
 } from "lucide-react";
 import RestaurantCard from "../components/RestaurantCard";
 import Loader from "../components/Loader";
+import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 const Discover = () => {
   const [searchData, setSearchData] = useState({
-    location: "",
-    date: "",
-    guests: "2",
-  });
+  location: "",
+  cuisine: "",
+  guests: "2",
+});
   const [loading, setloading] = useState(false);
   const [restaurants, setrestaurants] = useState([])
   const [email, setEmail] = useState("");
    const API_URL = import.meta.env.VITE_API_URL;
+
+  const navigate = useNavigate();
  const categories = [
   {
     name: "Italian",
@@ -77,19 +81,21 @@ const Discover = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-
-    console.log("Search:", searchData);
+     
+    navigate("/restaurants", {
+  state: searchData,
+});
   };
 
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-
-    if (!email) return;
-
-    console.log("Subscribed:", email);
-    setEmail("");
-  };
-
+const handleCategory=(categoryName)=>{
+  const updateSearchData = {
+    ...searchData,
+    cuisine:categoryName
+  }
+  navigate("/restaurants", {
+  state:updateSearchData,
+});
+}
   return (
     <main className="bg-white text-[#1d211d]">
 
@@ -132,10 +138,9 @@ const Discover = () => {
             {/* Reservation Search */}
             <form
   onSubmit={handleSearch}
-  className="mx-auto mt-6 w-full max-w-2xl rounded-2xl bg-white p-1 shadow-xl "
+  className="mx-auto mt-6 w-full max-w-2xl rounded-2xl bg-white p-1 shadow-xl"
 >
   <div className="flex flex-col sm:flex-row sm:items-center">
-
     {/* Location */}
     <div className="flex-1 px-4 py-2 sm:border-r sm:border-[#e7e7e2]">
       <p className="text-[9px] font-semibold uppercase tracking-wide text-[#8b9189]">
@@ -156,23 +161,30 @@ const Discover = () => {
       />
     </div>
 
-    {/* Date */}
+    {/* Cuisine */}
     <div className="flex-1 px-4 py-2 sm:border-r sm:border-[#e7e7e2]">
       <p className="text-[9px] font-semibold uppercase tracking-wide text-[#8b9189]">
-        Date
+        Cuisine
       </p>
 
-      <input
-        type="date"
-        value={searchData.date}
+      <select
+        value={searchData.cuisine}
         onChange={(e) =>
           setSearchData({
             ...searchData,
-            date: e.target.value,
+            cuisine: e.target.value,
           })
         }
         className="mt-0.5 w-full bg-transparent text-xs leading-none text-[#252a25] outline-none"
-      />
+      >
+        <option value="">All cuisines</option>
+
+        {categories.map((category) => (
+          <option key={category.name} value={category.name}>
+            {category.name}
+          </option>
+        ))}
+      </select>
     </div>
 
     {/* Guests */}
@@ -191,25 +203,21 @@ const Discover = () => {
         }
         className="mt-0.5 w-full bg-transparent text-xs leading-none text-[#252a25] outline-none"
       >
-        <option value="1">1 Guest</option>
-        <option value="2">2 Guests</option>
-        <option value="3">3 Guests</option>
-        <option value="4">4 Guests</option>
-        <option value="5">5 Guests</option>
-        <option value="6">6 Guests</option>
-        <option value="7">7 Guests</option>
-        <option value="8">8 Guests</option>
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((guest) => (
+          <option key={guest} value={String(guest)}>
+            {guest} {guest === 1 ? "Guest" : "Guests"}
+          </option>
+        ))}
       </select>
     </div>
 
-    {/* Button */}
+    {/* Submit Button */}
     <button
       type="submit"
       className="m-1 shrink-0 rounded-full bg-[#68755f] px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-[#56634e]"
     >
       Find a table
     </button>
-
   </div>
 </form>
 
@@ -269,9 +277,9 @@ const Discover = () => {
               </Link>
             ))} */}
           {categories.map((category) => (
-             <Link
+             <div
                 key={category.name}
-                to="/restaurants"
+                onClick={()=>handleCategory(category.name)}
                 className="group flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-[#e7e8e3] bg-[#fafbf9] px-4 transition duration-300 hover:-translate-y-1 hover:border-[#cbd1c5] hover:bg-[#f3f5f0] hover:shadow-sm"
               >
   <div
@@ -288,7 +296,7 @@ const Discover = () => {
       {category.name}
     </span>
   </div>
-  </Link>
+  </div>
 ))}
           </div>
 
@@ -356,46 +364,22 @@ const Discover = () => {
           SECTION 4 — SUBSCRIPTION
       ===================================================== */}
 
-      <section className="px-5 py-20 sm:py-24">
+       
+<section className="px-5 py-20 sm:py-24">
+  <div className="mx-auto max-w-3xl text-center">
+    <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#68755f]">
+      A little more to savour
+    </p>
 
-        <div className="mx-auto max-w-3xl text-center">
+    <h2 className="mt-3 font-serif text-3xl tracking-tight text-[#20251f] sm:text-4xl">
+      Good food. Great places. Unforgettable moments.
+    </h2>
 
-          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#68755f]">
-            Stay in the know
-          </p>
-
-         <h2 className="mt-3 font-serif text-3xl tracking-tight text-[#20251f] sm:text-4xl"> Get the latest from Tablely
-          </h2>
-
-          <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[#777d76]">
-            New restaurants, special dining experiences
-            and more, delivered to your inbox.
-          </p>
-
-          <form
-            onSubmit={handleSubscribe}
-            className="mx-auto mt-8 flex max-w-xl flex-col gap-2 rounded-full border border-[#dfe2da] bg-[#fafbf9] p-1.5 sm:flex-row"
-          >
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address"
-              className="min-w-0 flex-1 rounded-full bg-transparent px-5 py-3 text-sm text-[#252a24] outline-none placeholder:text-[#9da29b]"
-            />
-
-            <button
-              type="submit"
-              className="rounded-full bg-[#68755f] px-7 py-3 text-xs font-semibold text-white transition hover:bg-[#56634e]"
-            >
-              Subscribe
-            </button>
-          </form>
-
-        </div>
-
-      </section>
+    <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[#777d76]">
+      Discover hidden gems, explore exceptional restaurants, and find your next favourite table. Your next memorable dining experience starts here.
+    </p>
+  </div>
+</section>
 
       {/* =====================================================
           SECTION 5 — FOOTER

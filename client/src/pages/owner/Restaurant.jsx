@@ -3,7 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Save, Upload, MapPin, Utensils } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
-
+import Navbar from '../../components/Navbar';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const initialForm = {
@@ -25,20 +25,21 @@ export default function OwnerRestaurant() {
   const [restaurant, setRestaurant] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [image, setImage] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+const userId = user?.id || user?._id;
 
   useEffect(() => {
-    if (!user?._id) return;
+    if (!userId) return;
 
     const fetchRestaurant = async () => {
       try {
         setLoading(true);
 
         const response = await fetch(
-          `${API_URL}/owner/restaurant/${user._id}`,
+          `${API_URL}/owner/restaurant/${userId}`,
           { credentials: "include" }
         );
 
@@ -78,7 +79,7 @@ export default function OwnerRestaurant() {
     };
 
     fetchRestaurant();
-  }, [user?._id]);
+  }, [userId]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -139,9 +140,10 @@ export default function OwnerRestaurant() {
 
   return (
     <div className="min-h-screen bg-[#f7f8f5] text-[#1d211d]">
+      <Navbar/>
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         <Link
-          to="/owner"
+          to="/owner/dashboard"
           className="inline-flex items-center gap-2 text-sm text-[#68755f] hover:text-[#56634e]"
         >
           <ArrowLeft size={17} /> Dashboard
@@ -282,7 +284,7 @@ export default function OwnerRestaurant() {
 
             <div className="flex flex-col-reverse gap-3 border-t border-[#edf0e9] pt-6 sm:flex-row sm:justify-end">
               <Link
-                to="/owner"
+                to="/owner/dashboard"
                 className="rounded-full border border-[#dfe3d8] px-6 py-3 text-center text-sm font-medium hover:bg-[#f7f8f5]"
               >
                 Cancel
