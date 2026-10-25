@@ -3,6 +3,9 @@
 .env
 .env.*
 !.env.example
+**/.env
+**/.env.*
+!**/.env.example
 
 # Logs
 logs/
@@ -35,5 +38,5 @@ build/
 *.sln
 *.sw?
 
-# Optional: environment-specific files
+# Deployment
 .vercel/
