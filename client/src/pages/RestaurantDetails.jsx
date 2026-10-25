@@ -112,14 +112,14 @@ navigate("/confirm-reservation", {
       <p className="bg-white text-gray-500 text-center">restaurant not found</p>
       </div></>
      )
-   }else if(loading){
-    return(
-      <div className="w-screen h-screen flex justify-center items-center">
-        
-      <Loader/>
+   }
+      if (loading) {
+    return (
+      <div className="flex min-h-screen w-screen items-center justify-center bg-[#f7f8f5]">
+        <Loader />
       </div>
-    )
-   }else
+    );
+  }
   return (
     <main className="min-h-screen bg-white text-[#1d211d]">
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
 import { toast } from "react-toastify";
+import ConfirmModal from "../components/ConfirmModel";
 
 const ConfirmReservation = () => {
   const navigate = useNavigate();
@@ -41,10 +42,15 @@ const ConfirmReservation = () => {
       year: "numeric",
     });
   };
+  const [showConfirm, setShowConfirm] = useState(false);
+ const handleSubmit = (e) => {
+    e.preventDefault()
+  setShowConfirm(true);
+};
+const confirmBooking = async () => {
 
-  const handleSubmit = async(e) => {
-    e.preventDefault();
-     
+  setShowConfirm(false);
+
     if (
       !formData.phone
     ) {
@@ -91,14 +97,13 @@ toast.success("Restaurant booked successfully")
   
   };
 
-  if(loading){
+    if (loading) {
     return (
-      <div className="w-screen h-screen flex justify-center items-center">
-        
-      <Loader/>
+      <div className="flex min-h-screen w-screen items-center justify-center bg-[#f7f8f5]">
+        <Loader />
       </div>
-    )
-  }else
+    );
+  }
   return (
     <main className="min-h-screen bg-[#f7f8f5] px-4 py-8 text-[#20251f] sm:px-6 lg:px-10 lg:py-12">
       <div className="mx-auto max-w-7xl">
@@ -163,20 +168,20 @@ toast.success("Restaurant booked successfully")
             <div className="mt-5 flex gap-4">
 
               <img
-                src={reservation.image}
-                alt={reservation.name}
+                src={reservation?.image}
+                alt={reservation?.name}
                 className="h-20 w-20 shrink-0 rounded-xl object-cover"
               />
 
               <div className="min-w-0">
                 <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[#68755f]">
-                  {reservation.cuisine
+                  {reservation?.cuisine
                     ?.split("·")[0]
                     ?.trim()}
                 </p>
 
                 <h3 className="mt-1 font-serif text-xl text-[#20251f]">
-                  {reservation.name}
+                  {reservation?.name}
                 </h3>
 
                 <div className="mt-1 flex items-center gap-1.5 text-xs text-[#858b84]">
@@ -195,7 +200,7 @@ toast.success("Restaurant booked successfully")
                     <circle cx="12" cy="10" r="2" />
                   </svg>
 
-                  {reservation.location}
+                  {reservation?.location}
                 </div>
               </div>
             </div>
@@ -231,7 +236,7 @@ toast.success("Restaurant booked successfully")
                 </div>
 
                 <span className="text-sm font-medium text-[#30362f]">
-                  {formatDate(reservation.date)}
+                  {formatDate(reservation?.date)}
                 </span>
               </div>
 
@@ -261,7 +266,7 @@ toast.success("Restaurant booked successfully")
                 </div>
 
                 <span className="text-sm font-medium text-[#30362f]">
-                  {reservation.time}
+                  {reservation?.time}
                 </span>
               </div>
 
@@ -294,8 +299,8 @@ toast.success("Restaurant booked successfully")
                 </div>
 
                 <span className="text-sm font-medium text-[#30362f]">
-                  {reservation.guests}{" "}
-                  {Number(reservation.guests) === 1
+                  {reservation?.guests}{" "}
+                  {Number(reservation?.guests) === 1
                     ? "Guest"
                     : "Guests"}
                 </span>
@@ -467,6 +472,14 @@ toast.success("Restaurant booked successfully")
           </section>
         </div>
       </div>
+      <ConfirmModal
+  isOpen={showConfirm}
+  title="Confirm Your Booking?"
+  message="Are you sure you want to reserve a table at this restaurant?"
+  confirmText="Confirm Booking"
+  onCancel={() => setShowConfirm(false)}
+  onConfirm={confirmBooking}
+/>
     </main>
   );
 };

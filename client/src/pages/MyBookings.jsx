@@ -84,7 +84,14 @@ const MyBookings = () => {
 
    
   };
-  //loading is not implement
+  
+    if (loading) {
+    return (
+      <div className="flex min-h-screen w-screen items-center justify-center bg-[#f7f8f5]">
+        <Loader />
+      </div>
+    );
+  }
   return (
     <main className="min-h-screen bg-white text-[#1d211d]">
 

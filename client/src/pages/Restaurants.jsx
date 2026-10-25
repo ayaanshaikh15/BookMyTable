@@ -38,7 +38,7 @@ const Restaurants = () => {
 
       setrestaurants(res);
        window.scrollTo({
-      top: 0,
+      top: 500,
       left: 0,
       behavior: "smooth",
     });
