@@ -56,6 +56,7 @@ const handleSubmit = async (e) => {
       setUser(result.user);
 
       if (result.user.role === "owner") {
+        toast.info("You can create a restaurant, but it will be listed only after admin approval.")
         navigate("/owner/dashboard");
       } else if (result.user.role === "admin") {
         navigate("/admin/dashboard");
