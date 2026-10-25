@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
+import { toast } from "react-toastify";
 
 const ConfirmReservation = () => {
   const navigate = useNavigate();
@@ -73,12 +74,13 @@ if (!response.ok) {
 
 const res = await response.json();
 
-
+toast.success("Restaurant booked successfully")
 // Later connect this to your backend
     navigate("/booking-success", {
       state: res,
     });
     }catch(e){
+        toast.error("Something went wrong booking failed")
         setError("failed to book")
     }finally{
      setloading(false);

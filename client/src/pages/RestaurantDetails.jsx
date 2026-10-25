@@ -8,7 +8,7 @@ const RestaurantDetails = () => {
   const API_URL = import.meta.env.VITE_API_URL;
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [guests, setGuests] = useState("2");
+  const [guests, setGuests] = useState("1");
   const [availability, setavailability] = useState(null)
   const [loadingAvailable, setloadingAvailable] = useState(false)
   const [loading,setLoading]=useState(false)
@@ -418,7 +418,7 @@ navigate("/confirm-reservation", {
     {time && (
       availability.find((slot) => slot.time === time)?.availableSeats == 0?(<>
     <div className="my-2 text-[12px] mr-1 text-[#636662]">
-    <p>Restaurant is not available for this particular date</p>
+    <p>Restaurant is not available for this particular time</p>
   </div>
     </>):
     (<><div className="mt-3">
@@ -500,8 +500,12 @@ navigate("/confirm-reservation", {
     {/* Button */}
     <button
       type="button"
+       disabled={
+        Boolean(
+  !date || !time || !guests)
+}
       onClick={handleReservation}
-      className="mt-4 w-full rounded-full bg-[#68755f] py-2.5 text-xs font-semibold text-white transition hover:bg-[#56634e]"
+      className="mt-4 w-full rounded-full disabled:bg-[#a2ae9a] bg-[#68755f] py-2.5 text-xs font-semibold text-white transition hover:bg-[#56634e]"
     >
       Continue to booking
     </button>

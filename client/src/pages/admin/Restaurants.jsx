@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Loader from "../../components/Loader";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
+import { toast } from "react-toastify";
 
 const AdminRestaurants = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -133,7 +134,9 @@ const API_URL = import.meta.env.VITE_API_URL;
   }));
 }
   setSelectedRestaurant(null)
+  toast.success("Owner status updated")
   } catch (error) {
+    toast.success("Owner status failed to update")
       console.error(
         "Status update error:",
         error

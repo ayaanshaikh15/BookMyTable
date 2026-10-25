@@ -9,6 +9,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Navbar from '../../components/Navbar';
+import { toast } from "react-toastify";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const filters = ["all", "confirmed", "completed", "cancelled"];
@@ -84,7 +85,7 @@ export default function OwnerBookings() {
       if (!response.ok) {
         throw new Error(data.message || "Failed to update booking");
       }
-
+     
       setBookings((previous) =>
         previous.map((booking) =>
           booking._id === bookingId
@@ -92,7 +93,9 @@ export default function OwnerBookings() {
             : booking
         )
       );
+      toast.success("Booking status updated")
     } catch (err) {
+      toast.success("Booking status failed to update")
       setError(err.message || "Failed to update booking");
     } finally {
       setUpdatingId(null);

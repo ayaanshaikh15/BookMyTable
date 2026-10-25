@@ -3,6 +3,7 @@ import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Loader from "../components/Loader";
+import { toast } from "react-toastify";
 
 const Login = () => {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -50,6 +51,7 @@ const Login = () => {
     
   if(result.user){
      setUser(result.user);
+     toast.success(`Welcome ${result.user.name}`)
       if (result.user.role === "owner") {
         navigate("/owner/dashboard");
       } else if(result.user.role === "admin") {
@@ -57,8 +59,10 @@ const Login = () => {
       }else{
         navigate("/");
       }
+
     }else
     {
+      toast.error("Somthing went wrong Failed to login");
       setLoading(false);
       setError(result.message || "Invalid email or password");
     }
@@ -70,13 +74,13 @@ const Login = () => {
       setLoading(false);
     }
   };
-  if(loading){
+ if (loading) {
     return (
-
-      <Loader/>
-    )
+      <div className="min-h-screen bg-[#f7f8f5] flex items-center justify-center">
+        <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#dfe3d8] border-t-[#68755f]" />
+      </div>
+    );
   }
-  else{ 
   return (
     <div className="min-h-screen bg-[#f7f8f5] px-4 py-8 text-[#1d211d]">
 
@@ -214,7 +218,7 @@ const Login = () => {
     </div>
   );
   }
-};
+
 
 export default Login;
 

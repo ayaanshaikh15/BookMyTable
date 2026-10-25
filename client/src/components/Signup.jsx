@@ -3,6 +3,7 @@ import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Loader from "../components/Loader";
+import { toast } from "react-toastify";
 
 const Signup = () => {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -61,7 +62,9 @@ const handleSubmit = async (e) => {
       } else {
         navigate("/");
       }
+      toast.success("Signed in successfully")
     } else {
+       toast.error("Something went wrong signed in failed")
       setLoading(false);
       setError(result.message || "Signup failed");
     }

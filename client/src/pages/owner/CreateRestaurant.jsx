@@ -14,6 +14,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const defaultSlots = [
   "17:00",
@@ -239,7 +240,7 @@ export default function CreateRestaurant() {
         response.data?.message ||
           "Restaurant created successfully!"
       );
-
+      toast.success("Restaurant created successfully")
       setTimeout(() => {
         navigate("/owner/dashboard");
       }, 1200);

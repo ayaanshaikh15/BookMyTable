@@ -7,7 +7,6 @@ function BookingSucess() {
   const navigate = useNavigate();
 
   const booking = location.state;
-  console.log(booking)
 
   const isValid =
     booking?.restaurantId.name &&
