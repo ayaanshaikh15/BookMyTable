@@ -92,7 +92,7 @@ else{
         <div className="grid w-full overflow-hidden rounded-2xl border border-[#e5e7e1] bg-white shadow-sm lg:grid-cols-2">
 
           {/* Image */}
-          <div className="relative hidden min-h-[500px] lg:block">
+          <div className="relative hidden min-h-125lg:block">
 
             <img
               src="https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1000&q=85"

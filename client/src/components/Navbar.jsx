@@ -2,6 +2,7 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import ConfirmModal from "./ConfirmModel";
 
 const Navbar = () => {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -17,12 +18,14 @@ const [showUserMenu, setShowUserMenu] = useState(false);
 
   const isHomePage = location.pathname === "/";
 
+const [showConfirm, setShowConfirm] = useState(false);
 
-const handleLogout = async () => {
-   const confirmsg=window.confirm('Are you sure you want to logout');
-  
- 
-  if(confirmsg){
+const handleLogout = () => {
+  setShowConfirm(true);
+};
+
+const confirmLogout = async () => {
+   setShowConfirm(false);
     setLoading(true);
   setMobileMenu(false);
   try {
@@ -43,7 +46,7 @@ const handleLogout = async () => {
   } finally {
     setLoading(false);
   }
-}
+
 };
 
   const closeMenu = () => {
@@ -476,6 +479,14 @@ const handleLogout = async () => {
           </div>
         </div>
       </div>
+      <ConfirmModal
+  isOpen={showConfirm}
+  title="Confirm Logout?"
+  message="Are you sure you want to logout?"
+  confirmText="Logout"
+  onCancel={() => setShowConfirm(false)}
+  onConfirm={confirmLogout}
+/>
     </header>
   );
 };

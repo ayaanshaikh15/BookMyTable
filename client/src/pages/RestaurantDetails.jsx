@@ -2,13 +2,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Loader from "../components/Loader";
+import { toast } from "react-toastify";
 
 const RestaurantDetails = () => {
   const { id } = useParams();
   const API_URL = import.meta.env.VITE_API_URL;
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [guests, setGuests] = useState("1");
+  const [guests, setGuests] = useState("");
   const [availability, setavailability] = useState(null)
   const [loadingAvailable, setloadingAvailable] = useState(false)
   const [loading,setLoading]=useState(false)
@@ -58,7 +59,7 @@ const navigate = useNavigate();
 
   const handleReservation = () => {
     if (!date || !time || !guests ) {
-      alert("Please select date, time, guests and a table.");
+      toast.dark("Please select date, time, guests and a table.");
       return;
     }
     
@@ -88,8 +89,9 @@ navigate("/confirm-reservation", {
             res.message || "Failed to fetch the featured restaurants"
           );
         }
-  
+        
         setavailability(res);
+  
       } catch (e) {
         console.error("Failed to fetch restaurant availability:", e);
       }finally{
@@ -402,6 +404,7 @@ navigate("/confirm-reservation", {
         value={time}
         onChange={(e) => {
           setTime(e.target.value);
+          setGuests("");
         }}
         className="w-full rounded-lg border border-[#dfe2da] bg-white px-3 py-2 text-xs text-[#252a25] outline-none transition focus:border-[#68755f]"
       >
